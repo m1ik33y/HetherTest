@@ -2019,6 +2019,14 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
+  let currentUser = null;
+
+async function initUser() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  currentUser = user;
+}
+
 const supabaseClient = window.supabase.createClient(
   "https://zdxevrzwndranrcerrhs.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGV2cnp3bmRyYW5yY2VycmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NzA1NjYsImV4cCI6MjA5MzA0NjU2Nn0.F6HWXevFCBF1KTd7IahlqbfHhm3koC0pqmRFK4TPPfM"
@@ -2114,33 +2122,39 @@ function hideRemoteTyping() {
   }
 }
 
-async function broadcastTyping(isTyping) {
-  if (!typingChannel || !activeDmId) return;
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) return;
+function broadcastTyping(isTyping) {
+  if (!typingChannel || !activeDmId || !currentUser) return;
+  if (typingChannel.state !== 'joined') return; // ✅ ensure ready
+
   typingChannel.send({
     type: 'broadcast',
     event: 'typing',
-    payload: { userId: user.id, isTyping }
+    payload: {
+      userId: currentUser.id,
+      isTyping
+    }
   });
 }
 
 function onDmInputChange(mode) {
   toggleDmSendBtn();
-  if (mode === 'desktop') {
-    const val = document.getElementById('dmInput').value.trim();
-    if (val.length > 0 && !isCurrentlyTyping) {
+
+  const val = document.getElementById('dmInput').value.trim();
+
+  if (val.length > 0) {
+    if (!isCurrentlyTyping) {
       isCurrentlyTyping = true;
       broadcastTyping(true);
     }
+
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
       isCurrentlyTyping = false;
       broadcastTyping(false);
-    }, 1500);
-    if (val.length === 0) {
+    }, 1200);
+  } else {
+    if (isCurrentlyTyping) {
       isCurrentlyTyping = false;
-      clearTimeout(typingTimer);
       broadcastTyping(false);
     }
   }
@@ -4095,7 +4109,14 @@ async function loadUserProfile() {
   renderProfileEverywhere();
 }
 
-window.addEventListener('load', function() { checkAuth(); });
+window.addEventListener('load', async function() {
+  await initUser();   // ✅ ADD THIS
+  checkAuth();
+});
+
+document.getElementById('dmInput')?.addEventListener('blur', () => {
+  stopTypingBroadcast();
+});
 </script>
 </body>
 </html>
