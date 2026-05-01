@@ -1,0 +1,47 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://zdxevrzwndranrcerrhs.supabase.co",
+  "YOUR_ANON_KEY"
+);
+
+async function handleCallback() {
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    document.body.innerText = "Auth error";
+    return;
+  }
+
+  const user = data.session?.user;
+
+  if (!user) {
+    document.body.innerText = "No user found";
+    return;
+  }
+
+  // Check if profile already exists
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+
+  if (!existing) {
+    const username = localStorage.getItem("temp_username") || "user";
+
+    await supabase.from('profiles').insert([
+      {
+        id: user.id,
+        username: username
+      }
+    ]);
+  }
+
+  // Redirect back to app
+  window.location.href = "/";
+}
+
+handleCallback();
+</script>
