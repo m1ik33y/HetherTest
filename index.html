@@ -3538,11 +3538,49 @@ function openProfileEdit() {
   setTimeout(() => document.getElementById('peDisplayName').focus(), 50);
 }
 function closeProfileEdit() { document.getElementById('profileEditOverlay').classList.remove('show'); }
-function handleAvatarUpload(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => { profile.avatarUrl = ev.target.result; renderProfileEverywhere(); };
-  reader.readAsDataURL(file);
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}/avatar.${fileExt}`;
+
+  // Upload to Supabase Storage
+  const { error: uploadError } = await supabaseClient
+    .storage
+    .from('avatars')
+    .upload(fileName, file, { upsert: true });
+
+  if (uploadError) {
+    alert('Upload failed: ' + uploadError.message);
+    return;
+  }
+
+  // Get public URL
+  const { data } = supabaseClient
+    .storage
+    .from('avatars')
+    .getPublicUrl(fileName);
+
+  const publicUrl = data.publicUrl;
+
+  // Save to database
+  const { error: dbError } = await supabaseClient
+    .from('profiles')
+    .update({ avatar_url: publicUrl })
+    .eq('id', user.id);
+
+  if (dbError) {
+    alert('DB update failed: ' + dbError.message);
+    return;
+  }
+
+  // Update UI
+  profile.avatarUrl = publicUrl;
+  renderProfileEverywhere();
 }
 function removeAvatar() { profile.avatarUrl = null; renderProfileEverywhere(); document.getElementById('peImageUpload').value = ''; }
 function clearHistory() { chatHistory = []; newChat(); }
