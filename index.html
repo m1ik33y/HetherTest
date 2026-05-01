@@ -2068,7 +2068,7 @@ async function setupTypingChannel(myUserId, otherUserId) {
       if (payload.isTyping) {
         showRemoteTyping(otherUserId);
         clearTimeout(remoteTypingTimer);
-        remoteTypingTimer = setTimeout(() => hideRemoteTyping(), 3000);
+        remoteTypingTimer = setTimeout(() => hideRemoteTyping(), 5000);
       } else {
         clearTimeout(remoteTypingTimer);
         hideRemoteTyping();
@@ -2142,19 +2142,23 @@ function onDmInputChange(mode) {
   const val = document.getElementById('dmInput').value.trim();
 
   if (val.length > 0) {
+    // Only send "typing = true" ONCE
     if (!isCurrentlyTyping) {
       isCurrentlyTyping = true;
       broadcastTyping(true);
     }
 
+    // Reset timer (debounce)
     clearTimeout(typingTimer);
+
     typingTimer = setTimeout(() => {
       isCurrentlyTyping = false;
       broadcastTyping(false);
-    }, 1200);
+    }, 4000); // 🔥 increased from 1200 → 4000ms
   } else {
     if (isCurrentlyTyping) {
       isCurrentlyTyping = false;
+      clearTimeout(typingTimer);
       broadcastTyping(false);
     }
   }
