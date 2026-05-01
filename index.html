@@ -489,9 +489,7 @@ body {
 .btn-confirm { padding: 8px 16px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: background var(--t); font-weight: 500; }
 .btn-confirm:hover { background: var(--accent-hover); }
 
-/* ══════════════════════════════════════════
-   ADMIN DM
-   ══════════════════════════════════════════ */
+/* ── ADMIN DM ── */
 .dm-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.55); z-index: 400;
@@ -563,7 +561,6 @@ body {
 }
 .dm-close-btn:hover { background: var(--surface2); color: var(--text); }
 
-/* ── DM SEARCH BAR ── */
 .dm-search-wrap {
   padding: 10px 12px 8px;
   border-bottom: 1px solid var(--border);
@@ -631,7 +628,6 @@ body {
 .dm-search-name { font-size: 13px; font-weight: 500; color: var(--text); }
 .dm-search-empty { padding: 12px; text-align: center; font-size: 12.5px; color: var(--text3); }
 
-/* ── DM FS SEARCH ── */
 .dm-fs-search-wrap {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -713,7 +709,6 @@ body {
 .dm-chat-topbar-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .dm-chat-topbar-status { font-size: 11.5px; color: #22c55e; }
 
-/* ── DELETE CHAT BUTTON in topbar ── */
 .dm-delete-chat-btn {
   background: transparent; border: none; cursor: pointer;
   color: var(--text3); width: 32px; height: 32px; border-radius: 8px;
@@ -736,7 +731,6 @@ body {
 .dm-chat-messages::-webkit-scrollbar { width: 3px; }
 .dm-chat-messages::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
 
-/* ── MESSAGE GROUPS & BUBBLES ── */
 .dm-time-separator {
   text-align: center; font-size: 11px; color: var(--text3);
   padding: 8px 0; margin: 6px 0; font-weight: 500;
@@ -777,7 +771,6 @@ body {
 .dm-group-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dm-group-avatar.hidden-av { visibility: hidden; }
 
-/* bubbles container */
 .dm-msg-bubbles {
   display: flex;
   flex-direction: column;
@@ -843,7 +836,6 @@ body {
 .dm-msg-group.sent .dm-bubble { background: var(--accent); color: #fff; }
 .dm-msg-group.received .dm-bubble { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 
-/* Bubble radius shaping */
 .dm-msg-group.sent .dm-bubble-wrap:first-child .dm-bubble { border-bottom-right-radius: 6px; }
 .dm-msg-group.sent .dm-bubble-wrap:last-child .dm-bubble { border-top-right-radius: 6px; }
 .dm-msg-group.sent .dm-bubble-wrap:not(:first-child):not(:last-child) .dm-bubble { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
@@ -851,7 +843,6 @@ body {
 .dm-msg-group.received .dm-bubble-wrap:last-child .dm-bubble { border-top-left-radius: 6px; }
 .dm-msg-group.received .dm-bubble-wrap:not(:first-child):not(:last-child) .dm-bubble { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
 
-/* Sending state */
 .dm-bubble.sending { opacity: 0.6; }
 .dm-sending-icon {
   display: inline-flex; align-items: center; justify-content: center;
@@ -863,7 +854,6 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Reaction */
 .dm-reaction {
   position: absolute; bottom: -10px;
   background: var(--surface); border: 1px solid var(--border);
@@ -876,7 +866,6 @@ body {
 .dm-msg-group.received .dm-reaction { left: 4px; }
 @keyframes reactionPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-/* Reply preview inside bubble */
 .dm-reply-preview {
   background: rgba(0,0,0,0.06); border-radius: 8px; padding: 6px 10px;
   font-size: 11.5px; color: var(--text2); margin-bottom: 4px;
@@ -889,7 +878,6 @@ body {
 
 .dm-group-time { font-size: 10.5px; color: var(--text3); padding: 2px 4px; margin-top: 2px; text-align: center; }
 
-/* DM media — no bubble */
 .dm-bubble-media-only {
   background: transparent !important;
   border: none !important;
@@ -900,7 +888,6 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,0.12);
 }
 
-/* ── FIX 1: Reply bar — sits ABOVE the input, not above messages ── */
 .dm-reply-bar {
   display: none;
   padding: 8px 14px;
@@ -918,7 +905,6 @@ body {
 .dm-reply-cancel { background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 18px; line-height: 1; transition: color var(--t); padding: 0 2px; }
 .dm-reply-cancel:hover { color: var(--text); }
 
-/* DM input area */
 .dm-chat-input-area {
   padding: 6px 12px 10px;
   background: var(--surface);
@@ -926,7 +912,6 @@ body {
   flex-shrink: 0;
 }
 
-/* DM media staging */
 .dm-media-staging-wrap {
   display: none; padding: 8px 14px;
   background: var(--surface);
@@ -938,9 +923,6 @@ body {
 .dm-media-staging-wrap.show { display: flex; }
 .dm-media-staging-inner {
   display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
-}
-.dm-media-staging-thumb img, .dm-media-staging-thumb video {
-  width: 44px; height: 44px; object-fit: cover; border-radius: 8px; display: block;
 }
 .dm-media-staging-thumb {
   position: relative; flex-shrink: 0;
@@ -1003,7 +985,6 @@ body {
 .emoji-btn:hover { color: var(--accent); background: rgba(91,106,240,0.08); }
 .emoji-btn.hidden { display: none; }
 
-/* Emoji picker */
 .emoji-picker-overlay { display: none; position: fixed; inset: 0; z-index: 9999; }
 .emoji-picker-overlay.show { display: block; }
 
@@ -1060,7 +1041,6 @@ body {
 }
 #dmFsInput::placeholder { color: var(--text3); }
 
-/* Mobile DM media staging */
 .dm-fs-media-staging-wrap {
   display: none; padding: 6px 12px 2px;
   background: var(--surface);
@@ -1171,7 +1151,7 @@ body {
 .note-save-status { font-size: 11px; color: var(--text3); }
 .note-save-status.saved { color: #22c55e; }
 
-/* ── CONFIRM DIALOG (reusable) ── */
+/* ── CONFIRM DIALOG ── */
 .confirm-popup {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 22px; width: 340px;
@@ -1181,7 +1161,6 @@ body {
 .confirm-popup p { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
 .confirm-popup .popup-btns { display: flex; gap: 8px; justify-content: flex-end; }
 
-/* ── CLEAR CHAT CONFIRM OVERLAY — above the DM popup ── */
 .clear-chat-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.55); z-index: 600;
@@ -1220,7 +1199,6 @@ body {
   .dm-fullscreen { display: none !important; }
 }
 
-/* Account switcher */
 .pd-accounts { padding: 6px 6px 0; display: none; flex-direction: column; gap: 2px; }
 .pd-accounts.show { display: flex; }
 .pd-account-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 7px; cursor: pointer; font-size: 12.5px; color: var(--text2); transition: background var(--t), color var(--t); border: none; background: transparent; width: 100%; font-family: 'DM Sans', sans-serif; }
@@ -1230,12 +1208,11 @@ body {
 .pd-add-acc { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 7px; cursor: pointer; font-size: 12.5px; color: var(--text3); transition: all var(--t); border: 1px dashed var(--border); background: transparent; width: 100%; font-family: 'DM Sans', sans-serif; margin-top: 4px; }
 .pd-add-acc:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Lightbox */
 .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; align-items: center; justify-content: center; cursor: zoom-out; }
 .lightbox.show { display: flex; }
 .lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
 
-/* ══ AUTH PAGE ══ */
+/* ── AUTH PAGE ── */
 .auth-page {
   display: flex; align-items: center; justify-content: center;
   height: 100vh; width: 100%;
@@ -1368,7 +1345,6 @@ body {
 .auth-panel-view { display: none; }
 .auth-panel-view.active { display: block; }
 
-/* Context menu */
 .dm-ctx-menu {
   position: fixed; background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.14);
@@ -1395,7 +1371,6 @@ body {
   min-height: 0;
 }
 
-/* skeleton loading */
 .dm-skeleton-msg {
   display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px;
 }
@@ -1495,7 +1470,6 @@ body {
 <!-- MAIN APP -->
 <div id="mainApp" style="display: none; width: 100%; height: 100%;">
 
-<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-icon">
@@ -1585,7 +1559,6 @@ body {
   </div>
 </div>
 
-<!-- MAIN AREA -->
 <main class="main" id="mainArea">
 
   <!-- CHAT VIEW -->
@@ -1935,7 +1908,7 @@ body {
   </div>
 </div>
 
-<!-- CONFIRM DIALOG OVERLAY (generic) -->
+<!-- CONFIRM DIALOG OVERLAY -->
 <div class="overlay" id="confirmOverlay">
   <div class="confirm-popup" id="confirmPopup">
     <h3 id="confirmTitle">Are you sure?</h3>
@@ -1968,7 +1941,8 @@ const supabaseClient = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGV2cnp3bmRyYW5yY2VycmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NzA1NjYsImV4cCI6MjA5MzA0NjU2Nn0.F6HWXevFCBF1KTd7IahlqbfHhm3koC0pqmRFK4TPPfM"
 );
 
-// ── SUBSCRIPTION MANAGERS ──
+// ── SUBSCRIPTION MANAGER ──
+// One active Supabase realtime channel at a time for messages.
 const subscriptionManager = {
   activeSubscription: null,
   async replaceSubscription(newChannel) {
@@ -1979,44 +1953,15 @@ const subscriptionManager = {
   }
 };
 
-// Manages the broadcast channel used for "chat cleared" signals
-let activeClearChannel = null;
-
-async function subscribeToClearBroadcast(otherId) {
-  if (activeClearChannel) {
-    await supabaseClient.removeChannel(activeClearChannel);
-    activeClearChannel = null;
-  }
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) return;
-
-  const channelName = getClearChannelName(user.id, otherId);
-  const channel = supabaseClient.channel(channelName);
-
-  channel.on('broadcast', { event: 'chat_cleared' }, () => {
-    // Other user cleared the chat — clear our UI too
-    if (activeDmId === otherId) {
-      clearChatUI();
-    }
-  });
-
-  await channel.subscribe();
-  activeClearChannel = channel;
-}
-
-// Deterministic channel name: same for both users regardless of who initiates
-function getClearChannelName(uid1, uid2) {
-  return 'clear:' + [uid1, uid2].sort().join(':');
-}
-
 // ── CLEAR CHAT UI ──
+// Wipes the message containers and resets the conversation preview in the sidebar.
 function clearChatUI() {
   const msgsEl = document.getElementById('dmChatMessages');
   if (msgsEl) msgsEl.innerHTML = '';
   const fsMsgsEl = document.getElementById('dmFsMessages');
   if (fsMsgsEl) fsMsgsEl.innerHTML = '';
+  renderedMsgIds.clear();
 
-  // Reset last message preview in conversation list
   const contact = dmContacts.find(c => c.id === activeDmId);
   if (contact) {
     contact.lastMessage = null;
@@ -2037,7 +1982,9 @@ function closeClearChatConfirm() {
   document.getElementById('clearChatOverlay').classList.remove('show');
 }
 
-// Main clear chat logic: delete from Supabase, clear UI, broadcast to other user
+// Deletes all messages between the two users from Supabase.
+// The realtime DELETE listener (set up in loadMessages / loadFsMessages)
+// fires for BOTH users automatically, clearing both UIs in real time.
 async function confirmClearChat() {
   closeClearChatConfirm();
   if (!activeDmId) return;
@@ -2045,7 +1992,6 @@ async function confirmClearChat() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
 
-  // Delete all messages between these two users from backend
   const { error } = await supabaseClient
     .from('messages')
     .delete()
@@ -2055,29 +2001,9 @@ async function confirmClearChat() {
 
   if (error) {
     alert('Failed to clear chat: ' + error.message);
-    return;
   }
-
-  // Clear UI immediately for current user
-  clearChatUI();
-
-  // Broadcast to the other user so their UI clears in real time
-  const channelName = getClearChannelName(user.id, activeDmId);
-  // Use a fresh channel just for sending this one-shot broadcast
-  const broadcastChannel = supabaseClient.channel(channelName + ':send');
-  await broadcastChannel.subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await broadcastChannel.send({
-        type: 'broadcast',
-        event: 'chat_cleared',
-        payload: { cleared_by: user.id }
-      });
-      // Small delay then remove so message is delivered
-      setTimeout(async () => {
-        await supabaseClient.removeChannel(broadcastChannel);
-      }, 500);
-    }
-  });
+  // No manual UI clear needed here — the DELETE realtime event handles it
+  // for the current user too (via the subscription set up in loadMessages).
 }
 
 // Keyboard handler for the clear chat overlay
@@ -2562,13 +2488,6 @@ async function closeDM() {
   activeDmId = null;
   document.getElementById('dmOverlay').classList.remove('show');
   document.getElementById('dmFullscreen').classList.remove('show');
-
-  // Clean up the clear broadcast channel
-  if (activeClearChannel) {
-    await supabaseClient.removeChannel(activeClearChannel);
-    activeClearChannel = null;
-  }
-  // Clean up messages subscription
   await subscriptionManager.replaceSubscription(null);
 }
 
@@ -2702,7 +2621,6 @@ function openDesktopChat(id) {
   showSkeletonMessages(msgsEl);
 
   loadMessages(id);
-  subscribeToClearBroadcast(id); // Subscribe so other user's clear is received
   cancelReply();
   clearDmStaging();
   document.getElementById('dmInput').focus();
@@ -2950,7 +2868,9 @@ function cancelReply(mode) {
   document.getElementById('dmFsReplyBar')?.classList.remove('show');
 }
 
-// ── LOAD MESSAGES ──
+// ── LOAD MESSAGES (desktop) ──
+// Sets up both INSERT and DELETE realtime listeners.
+// DELETE fires for both users when messages are cleared, giving real-time sync.
 async function loadMessages(userId) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
@@ -2993,11 +2913,38 @@ async function loadMessages(userId) {
           updateContactLastMsg(userId, newMsg, user.id);
           buildDMConvList();
         }
-      }).subscribe();
+      })
+      // ── DELETE listener: fires for both users when any message is deleted ──
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, async (payload) => {
+        // Re-fetch remaining messages to check if the conversation is now empty
+        // (handles both single-message delete and clear-all)
+        if (activeDmId !== userId) return;
+        const { data: remaining } = await supabaseClient
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
+          .order('created_at', { ascending: true });
+
+        if (!remaining || remaining.length === 0) {
+          // Conversation fully cleared — wipe UI
+          clearChatUI();
+        } else {
+          // Some messages remain — re-render what's left
+          remaining.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
+          const groups = groupMessages(remaining.map(m => ({ ...m, ts: m.created_at })));
+          renderGroupedMessages(msgsEl, groups, user.id, contact);
+          const last = remaining[remaining.length - 1];
+          updateContactLastMsg(userId, last, user.id);
+          buildDMConvList();
+        }
+      })
+      .subscribe();
+
     await subscriptionManager.replaceSubscription(channel);
   } catch (err) {}
 }
 
+// ── LOAD MESSAGES (mobile) ──
 async function loadFsMessages(userId) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
@@ -3045,7 +2992,29 @@ async function loadFsMessages(userId) {
             buildDMConvList();
           }
         }
-      }).subscribe();
+      })
+      // ── DELETE listener for mobile ──
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, async (payload) => {
+        if (activeDmId !== userId) return;
+        const { data: remaining } = await supabaseClient
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
+          .order('created_at', { ascending: true });
+
+        if (!remaining || remaining.length === 0) {
+          clearChatUI();
+        } else {
+          remaining.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
+          const groups = groupMessages(remaining.map(m => ({ ...m, ts: m.created_at })));
+          renderGroupedMessages(msgsEl, groups, user.id, contact);
+          const last = remaining[remaining.length - 1];
+          updateContactLastMsg(userId, last, user.id);
+          buildDMConvList();
+        }
+      })
+      .subscribe();
+
     await subscriptionManager.replaceSubscription(channel);
   } catch (err) {}
 }
@@ -3108,7 +3077,6 @@ function openFsChat(id) {
   showSkeletonMessages(msgsEl);
 
   loadFsMessages(id);
-  subscribeToClearBroadcast(id); // Subscribe so other user's clear is received
   cancelReply('mobile');
   clearDmFsStaging();
   document.getElementById('dmFsListView').style.display = 'none';
@@ -3131,7 +3099,6 @@ function dmHandleKey(e, mode) {
 // ── SEND DM ──
 async function dmSend(mode) {
   const inputId = mode === 'mobile' ? 'dmFsInput' : 'dmInput';
-  const sendBtnId = mode === 'mobile' ? 'dmFsSendBtn' : 'dmSendBtn';
   const input = document.getElementById(inputId);
 
   const staged = mode === 'mobile' ? dmFsStagedMedia : dmStagedMedia;
@@ -3154,10 +3121,10 @@ async function dmSend(mode) {
   input.style.height = 'auto';
   if (mode === 'mobile') toggleDmFsSendBtn(); else toggleDmSendBtn();
 
-  // Optimistic bubble
   const msgsEl = document.getElementById(mode === 'mobile' ? 'dmFsMessages' : 'dmChatMessages');
   const contact = dmContacts.find(c => c.id === activeDmId);
 
+  // Optimistic bubble
   const optimisticGroup = document.createElement('div');
   optimisticGroup.className = 'dm-msg-group sent';
   optimisticGroup.dataset.optimistic = 'true';
