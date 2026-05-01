@@ -713,6 +713,16 @@ body {
 .dm-chat-topbar-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .dm-chat-topbar-status { font-size: 11.5px; color: #22c55e; }
 
+/* ── DELETE CHAT BUTTON in topbar ── */
+.dm-delete-chat-btn {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text3); width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color var(--t), background var(--t);
+  flex-shrink: 0;
+}
+.dm-delete-chat-btn:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+
 .dm-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -779,8 +789,6 @@ body {
 .dm-msg-group.sent .dm-msg-bubbles { align-items: flex-end; }
 .dm-msg-group.received .dm-msg-bubbles { align-items: flex-start; }
 
-/* ── FIX 2: Reply button positioning ── */
-/* bubble wrap is a normal row — no row-reverse */
 .dm-bubble-wrap {
   position: relative;
   display: flex;
@@ -792,10 +800,6 @@ body {
 .dm-msg-group.sent .dm-bubble-wrap {
   justify-content: flex-end;
 }
-
-/* FIX 2: reply btn for SENT — appears to the RIGHT of bubble (button is after bubble in DOM) */
-/* reply btn for RECEIVED — appears to the LEFT of bubble (button is before bubble in DOM) */
-/* No flex-direction: row-reverse on .dm-bubble-wrap for sent — we control order via DOM */
 
 .dm-reply-btn {
   opacity: 0;
@@ -922,7 +926,6 @@ body {
   flex-shrink: 0;
 }
 
-/* DM media staging */
 /* DM media staging */
 .dm-media-staging-wrap {
   display: none; padding: 8px 14px;
@@ -1178,6 +1181,16 @@ body {
 .confirm-popup p { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
 .confirm-popup .popup-btns { display: flex; gap: 8px; justify-content: flex-end; }
 
+/* ── CLEAR CHAT CONFIRM OVERLAY — above the DM popup ── */
+.clear-chat-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55); z-index: 600;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.15s ease;
+}
+.clear-chat-overlay.show { display: flex; }
+
 /* ── MOBILE ── */
 @media (max-width: 640px) {
   :root { --sidebar-w: 80vw; }
@@ -1380,6 +1393,26 @@ body {
   flex: 1;
   overflow: hidden;
   min-height: 0;
+}
+
+/* skeleton loading */
+.dm-skeleton-msg {
+  display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px;
+}
+.dm-skeleton-msg.sent { flex-direction: row-reverse; }
+.dm-skeleton-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface2); flex-shrink: 0;
+  animation: shimmer 1.4s infinite;
+}
+.dm-skeleton-bubble {
+  height: 38px; border-radius: 18px;
+  background: var(--surface2);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%,100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 </style>
 </head>
@@ -1725,12 +1758,16 @@ body {
             <div class="dm-chat-topbar-name" id="dmTopbarName"></div>
             <div class="dm-chat-topbar-status">Active now</div>
           </div>
+          <!-- DELETE CHAT BUTTON -->
+          <button class="dm-delete-chat-btn" id="dmDeleteChatBtn" onclick="openClearChatConfirm()" title="Clear chat (Alt+Backspace)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+          </button>
         </div>
 
         <!-- Messages -->
         <div class="dm-chat-messages" id="dmChatMessages"></div>
 
-        <!-- ✅ FIX: Media staging now sits right above reply bar + input -->
+        <!-- Media staging -->
         <div class="dm-media-staging-wrap" id="dmMediaStagingWrap">
           <div class="dm-media-staging-inner">
             <div class="dm-media-staging-thumb" id="dmMediaStagingThumb"></div>
@@ -1798,12 +1835,16 @@ body {
       </button>
       <div class="dm-fs-avatar" id="dmFsAvatar"></div>
       <div class="dm-fs-name" id="dmFsName"></div>
+      <!-- DELETE CHAT BUTTON mobile -->
+      <button class="dm-delete-chat-btn" onclick="openClearChatConfirm()" title="Clear chat" style="margin-left:auto;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+      </button>
     </div>
 
     <!-- Mobile messages -->
     <div class="dm-fs-messages" id="dmFsMessages"></div>
 
-    <!-- ✅ FIX: Mobile media staging now sits right above reply bar + input -->
+    <!-- Mobile media staging -->
     <div class="dm-fs-media-staging-wrap" id="dmFsMediaStagingWrap">
       <div class="dm-media-staging-inner">
         <div class="dm-media-staging-thumb" id="dmFsMediaStagingThumb"></div>
@@ -1916,6 +1957,18 @@ body {
   </div>
 </div>
 
+<!-- CLEAR CHAT CONFIRM — z-index 600, above DM popup (z-index 400) -->
+<div class="clear-chat-overlay" id="clearChatOverlay">
+  <div class="confirm-popup" id="clearChatPopup">
+    <h3>Clear chat?</h3>
+    <p>All messages in this conversation will be removed from your view. This cannot be undone.</p>
+    <div class="popup-btns">
+      <button class="btn-cancel" id="clearChatCancelBtn" onclick="closeClearChatConfirm()">Cancel</button>
+      <button class="btn-confirm" id="clearChatConfirmBtn" style="background:#ef4444;" onclick="confirmClearChat()">Clear chat</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /mainApp -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1935,6 +1988,7 @@ const subscriptionManager = {
   }
 };
 
+// CHANGE 1: Shortcut changed from Alt+T to Alt+K
 const ADMIN_KEY = 'adminm1ik33yshamwaviii';
 let currentView = 'chat';
 let isTyping = false;
@@ -1955,6 +2009,39 @@ let aiStagedMedia = null;
 const renderedMsgIds = new Set();
 
 let profile = JSON.parse(localStorage.getItem('hether_profile') || 'null') || { name: 'User', username: '@user', email: 'user@example.com', avatarUrl: null };
+
+// ── CLEAR CHAT CONFIRM ──
+function openClearChatConfirm() {
+  if (!activeDmId) return;
+  const overlay = document.getElementById('clearChatOverlay');
+  overlay.classList.add('show');
+  // Auto-focus confirm button
+  setTimeout(() => {
+    const confirmBtn = document.getElementById('clearChatConfirmBtn');
+    if (confirmBtn) confirmBtn.focus();
+  }, 50);
+}
+
+function closeClearChatConfirm() {
+  document.getElementById('clearChatOverlay').classList.remove('show');
+}
+
+function confirmClearChat() {
+  // Static for now — UI only
+  closeClearChatConfirm();
+  // TODO: implement actual clear logic later
+}
+
+// Clear chat keyboard handler
+document.getElementById('clearChatOverlay').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    confirmClearChat();
+  }
+  if (e.key === 'Escape') {
+    closeClearChatConfirm();
+  }
+});
 
 // ── CONFIRM DIALOG ──
 let _confirmCallback = null;
@@ -2171,7 +2258,6 @@ function handleDmPaste(e, mode) {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev => {
-        // Dismiss reply bar when image is pasted — they're mutually exclusive
         cancelReply(mode);
         if (mode === 'mobile') stageDmMediaFromDataUrl(ev.target.result, false, 'mobile');
         else stageDmMediaFromDataUrl(ev.target.result, false, 'desktop');
@@ -2377,11 +2463,9 @@ function verifyAdmin() {
   else { document.getElementById('adminError').style.display = 'block'; document.getElementById('adminInput').value = ''; document.getElementById('adminInput').focus(); }
 }
 
+// CHANGE 2 & 3: openDM shows UI immediately, loads data in background
 async function openDM() {
   dmOpen = true;
-
-  await loadContacts();      // load users
-  await preloadAllChats();   // 🔥 preload all conversations
 
   if (isMobile()) {
     document.getElementById('dmFullscreen').classList.add('show');
@@ -2389,8 +2473,12 @@ async function openDM() {
     document.getElementById('dmFsChatView').style.display = 'none';
   } else {
     document.getElementById('dmOverlay').classList.add('show');
-    if (!activeDmId) showDmEmptyState();
+    showDmEmptyState();
   }
+
+  // Load contacts and chats in background — UI is already visible
+  await loadContacts();
+  await preloadAllChats();
 }
 
 function closeDM() {
@@ -2483,6 +2571,26 @@ function showDmEmptyState() {
   document.getElementById('dmActiveChatWrap').style.display = 'none';
 }
 
+// CHANGE 3: showSkeletonMessages — show skeleton while loading
+function showSkeletonMessages(container) {
+  container.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const isSent = i % 2 === 0;
+    const sk = document.createElement('div');
+    sk.className = `dm-skeleton-msg${isSent ? ' sent' : ''}`;
+    if (!isSent) {
+      const av = document.createElement('div');
+      av.className = 'dm-skeleton-av';
+      sk.appendChild(av);
+    }
+    const bub = document.createElement('div');
+    bub.className = 'dm-skeleton-bubble';
+    bub.style.width = (60 + Math.random() * 80) + 'px';
+    sk.appendChild(bub);
+    container.appendChild(sk);
+  }
+}
+
 function openDesktopChat(id) {
   const contact = dmContacts.find(c => c.id === id);
   if (!contact) return;
@@ -2499,11 +2607,16 @@ function openDesktopChat(id) {
     av.style.background = contact.color;
     av.textContent = contact.initials;
   }
+
+  // Show immediately with skeleton — CHANGE 3
+  document.getElementById('dmEmptyState').style.display = 'none';
+  document.getElementById('dmActiveChatWrap').style.display = 'flex';
+  const msgsEl = document.getElementById('dmChatMessages');
+  showSkeletonMessages(msgsEl);
+
   loadMessages(id);
   cancelReply();
   clearDmStaging();
-  document.getElementById('dmEmptyState').style.display = 'none';
-  document.getElementById('dmActiveChatWrap').style.display = 'flex';
   document.getElementById('dmInput').focus();
 }
 
@@ -2541,10 +2654,6 @@ function groupMessages(messages) {
   return groups;
 }
 
-// ── FIX 2: renderGroupedMessages — correct reply button sides ──
-// For SENT messages: bubble first in DOM, then replyBtn → replyBtn appears on RIGHT
-// For RECEIVED messages: replyBtn first in DOM, then bubble → replyBtn appears on LEFT
-// No flex-direction: row-reverse on .dm-bubble-wrap, so DOM order = visual order
 function renderGroupedMessages(container, groups, currentUserId, contact) {
   container.innerHTML = '';
   renderedMsgIds.clear();
@@ -2611,18 +2720,18 @@ function renderGroupedMessages(container, groups, currentUserId, contact) {
       }
 
       if (msg.media_url) {
-  if (msg.is_video) {
-    bubble.innerHTML += `<video controls src="${msg.media_url}" style="max-width:220px;border-radius:10px;"></video>`;
-  } else {
-    bubble.innerHTML += `<img src="${msg.media_url}" style="max-width:220px;border-radius:10px;">`;
-  }
-}
+        if (msg.is_video) {
+          bubble.innerHTML += `<video controls src="${msg.media_url}" style="max-width:220px;border-radius:10px;"></video>`;
+        } else {
+          bubble.innerHTML += `<img src="${msg.media_url}" style="max-width:220px;border-radius:10px;">`;
+        }
+      }
 
-if (msg.content) {
-  const textNode = document.createElement('div');
-  textNode.textContent = msg.content;
-  bubble.appendChild(textNode);
-}
+      if (msg.content) {
+        const textNode = document.createElement('div');
+        textNode.textContent = msg.content;
+        bubble.appendChild(textNode);
+      }
 
       if (msg.sending) {
         const spin = document.createElement('span');
@@ -2641,17 +2750,13 @@ if (msg.content) {
         showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
       });
 
-      // FIX 2: DOM order controls visual order (no row-reverse on bWrap)
-      // SENT: bubble → replyBtn  (replyBtn ends up on the RIGHT)
-      // RECEIVED: replyBtn → bubble  (replyBtn ends up on the LEFT)
-      // AFTER (correct — Instagram-style)
-if (isSent) {
-  bWrap.appendChild(replyBtn);   // reply btn LEFT of sent bubble
-  bWrap.appendChild(bubble);
-} else {
-  bWrap.appendChild(bubble);     // bubble LEFT, reply btn RIGHT for received
-  bWrap.appendChild(replyBtn);
-}
+      if (isSent) {
+        bWrap.appendChild(replyBtn);
+        bWrap.appendChild(bubble);
+      } else {
+        bWrap.appendChild(bubble);
+        bWrap.appendChild(replyBtn);
+      }
 
       bubblesWrap.appendChild(bWrap);
     });
@@ -2740,11 +2845,8 @@ function deleteMessage(msg, bWrap) {
 function closeCtxMenu() { document.getElementById('dmCtxMenu').style.display = 'none'; }
 document.addEventListener('click', () => closeCtxMenu());
 
-// FIX 1: startReply fills the reply bar which now sits above the input
 function startReply(text, author) {
   replyingTo = { text, author };
-
-  // Dismiss any staged image — reply and image preview are mutually exclusive
   clearDmStaging();
   clearDmFsStaging();
 
@@ -2778,7 +2880,6 @@ async function loadMessages(userId) {
   renderedMsgIds.clear();
   const msgsEl = document.getElementById('dmChatMessages');
   if (!msgsEl) return;
-  msgsEl.innerHTML = '';
   const contact = dmContacts.find(c => c.id === userId);
 
   try {
@@ -2793,8 +2894,11 @@ async function loadMessages(userId) {
       renderGroupedMessages(msgsEl, groups, user.id, contact);
       const last = data[data.length - 1];
       updateContactLastMsg(userId, last, user.id);
+    } else {
+      // No messages — clear skeleton
+      msgsEl.innerHTML = '';
     }
-  } catch(err) {}
+  } catch(err) { msgsEl.innerHTML = ''; }
   try {
     const channel = supabaseClient
       .channel(`messages:${user.id}:${userId}`)
@@ -2823,7 +2927,6 @@ async function loadFsMessages(userId) {
   renderedMsgIds.clear();
   const msgsEl = document.getElementById('dmFsMessages');
   if (!msgsEl) return;
-  msgsEl.innerHTML = '';
   const contact = dmContacts.find(c => c.id === userId);
 
   try {
@@ -2836,8 +2939,10 @@ async function loadFsMessages(userId) {
       data.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
       const groups = groupMessages(data.map(m => ({ ...m, ts: m.created_at })));
       renderGroupedMessages(msgsEl, groups, user.id, contact);
+    } else {
+      msgsEl.innerHTML = '';
     }
-  } catch(err) {}
+  } catch(err) { msgsEl.innerHTML = ''; }
   try {
     const channel = supabaseClient
       .channel(`fs-messages:${user.id}:${userId}`)
@@ -2905,6 +3010,7 @@ function updateContactLastMsg(userId, msg, currentUserId) {
   buildDMConvList();
 }
 
+// CHANGE 3: openFsChat — show skeleton immediately, then load
 function openFsChat(id) {
   const contact = dmContacts.find(c => c.id === id);
   if (!contact) return;
@@ -2914,7 +3020,11 @@ function openFsChat(id) {
   if (contact.avatarUrl) { av.innerHTML = `<img src="${contact.avatarUrl}" alt="">`; av.style.background = 'transparent'; }
   else { av.style.background = contact.color; av.textContent = contact.initials; }
   document.getElementById('dmFsName').textContent = contact.name;
-  document.getElementById('dmFsMessages').innerHTML = '';
+
+  // Show immediately with skeleton
+  const msgsEl = document.getElementById('dmFsMessages');
+  showSkeletonMessages(msgsEl);
+
   loadFsMessages(id);
   cancelReply('mobile');
   clearDmFsStaging();
@@ -2934,6 +3044,7 @@ function dmHandleKey(e, mode) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dmSend(mode); }
 }
 
+// CHANGE 3: dmSend — optimistic immediate bubble, then DB insert
 async function dmSend(mode) {
   const inputId = mode === 'mobile' ? 'dmFsInput' : 'dmInput';
   const sendBtnId = mode === 'mobile' ? 'dmFsSendBtn' : 'dmSendBtn';
@@ -2955,49 +3066,95 @@ async function dmSend(mode) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   const msgReplyTo = replyingTo ? { ...replyingTo } : null;
   cancelReply(mode);
+
+  // Clear input immediately
   input.value = '';
   input.style.height = 'auto';
   if (mode === 'mobile') toggleDmFsSendBtn(); else toggleDmSendBtn();
 
+  // CHANGE 3: Append optimistic bubble immediately with sending state
   const msgsEl = document.getElementById(mode === 'mobile' ? 'dmFsMessages' : 'dmChatMessages');
   const contact = dmContacts.find(c => c.id === activeDmId);
-  const optimisticMsg = {
-    id: null, sender_id: user.id, content: text,
-    created_at: new Date().toISOString(), sending: true,
-    reply_to_text: msgReplyTo?.text, reply_to_author: msgReplyTo?.author
-  };
 
-  const { data: existingData } = await supabaseClient
-    .from('messages').select('*')
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${activeDmId}),and(sender_id.eq.${activeDmId},receiver_id.eq.${user.id})`)
-    .order('created_at', { ascending: true });
+  const optimisticGroup = document.createElement('div');
+  optimisticGroup.className = 'dm-msg-group sent';
+  optimisticGroup.dataset.optimistic = 'true';
+  const rowEl = document.createElement('div');
+  rowEl.className = 'dm-msg-group-row';
+  const bubblesWrap = document.createElement('div');
+  bubblesWrap.className = 'dm-msg-bubbles';
+  const bWrap = document.createElement('div');
+  bWrap.className = 'dm-bubble-wrap';
+  bWrap.dataset.text = text;
+  bWrap.dataset.sender = 'You';
 
-  const allMessages = [...(existingData || []), optimisticMsg];
-  const groups = groupMessages(allMessages.map(m => ({ ...m, ts: m.created_at })));
-  renderGroupedMessages(msgsEl, groups, user.id, contact);
-  sendBtn.disabled = true;
+  const replyBtnOpt = document.createElement('button');
+  replyBtnOpt.className = 'dm-reply-btn';
+  replyBtnOpt.title = 'Reply';
+  replyBtnOpt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
+  replyBtnOpt.onclick = (e) => { e.stopPropagation(); startReply(text, 'You'); };
 
+  const bubble = document.createElement('div');
+  bubble.className = 'dm-bubble sending';
+
+  if (msgReplyTo) {
+    const rp = document.createElement('div');
+    rp.className = 'dm-reply-preview';
+    rp.innerHTML = `<div class="dm-reply-author">${escHtml(msgReplyTo.author || '')}</div><div class="dm-reply-text">${escHtml(msgReplyTo.text)}</div>`;
+    bubble.prepend(rp);
+  }
+
+  const textNode = document.createElement('div');
+  textNode.textContent = text;
+  bubble.appendChild(textNode);
+
+  const spin = document.createElement('span');
+  spin.className = 'dm-sending-icon';
+  spin.innerHTML = `<div class="dm-sending-spinner"></div>`;
+  bubble.appendChild(spin);
+
+  bWrap.appendChild(replyBtnOpt);
+  bWrap.appendChild(bubble);
+  bubblesWrap.appendChild(bWrap);
+  rowEl.appendChild(bubblesWrap);
+  optimisticGroup.appendChild(rowEl);
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'dm-group-time';
+  timeEl.textContent = formatMsgTime(new Date());
+  optimisticGroup.appendChild(timeEl);
+
+  msgsEl.appendChild(optimisticGroup);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  // Insert to DB in background
   try {
     const insertData = {
-  sender_id: user.id,
-  receiver_id: activeDmId,
-  content: text || null,
-  media_url: staged ? staged.dataUrl : null,
-  is_video: staged ? staged.isVideo : false
-};
-
-if (msgReplyTo) {
-  insertData.reply_to_text = msgReplyTo.text;
-  insertData.reply_to_author = msgReplyTo.author;
-}
-    if (msgReplyTo) { insertData.reply_to_text = msgReplyTo.text; insertData.reply_to_author = msgReplyTo.author; }
-    const { error } = await supabaseClient.from('messages').insert(insertData);
+      sender_id: user.id,
+      receiver_id: activeDmId,
+      content: text || null,
+      media_url: staged ? staged.dataUrl : null,
+      is_video: staged ? staged.isVideo : false
+    };
+    if (msgReplyTo) {
+      insertData.reply_to_text = msgReplyTo.text;
+      insertData.reply_to_author = msgReplyTo.author;
+    }
+    const { data: inserted, error } = await supabaseClient.from('messages').insert(insertData).select().single();
     if (error) throw error;
-  } catch (err) {
+
+    // Remove optimistic, replace with real
+    optimisticGroup.remove();
     reloadAndRenderMessages(activeDmId, mode);
-    input.value = text;
+    updateContactLastMsg(activeDmId, inserted, user.id);
+    buildDMConvList();
+  } catch (err) {
+    // Mark bubble as failed (remove spinner, show as failed)
+    spin.remove();
+    bubble.classList.remove('sending');
+    bubble.style.opacity = '0.5';
+    bubble.title = 'Failed to send';
   } finally {
-    sendBtn.disabled = false;
     input.focus();
   }
 }
@@ -3133,15 +3290,25 @@ function handleAvatarUpload(e) {
 function removeAvatar() { profile.avatarUrl = null; renderProfileEverywhere(); document.getElementById('peImageUpload').value = ''; }
 function clearHistory() { chatHistory = []; newChat(); }
 
+// CHANGE 1: Shortcut Alt+K instead of Alt+T; added Alt+Backspace for clear chat
 document.addEventListener('keydown', e => {
-  if (e.altKey && e.key === 't') {
+  // Alt+K: open/close admin
+  if (e.altKey && e.key === 'k') {
     e.preventDefault();
     const adminOpen = document.getElementById('adminOverlay').classList.contains('show');
     if (adminOpen) { closeAdminPopup(); return; }
     if (dmOpen) { closeDM(); return; }
     openAdminPopup();
   }
+  // Alt+Backspace: open clear chat confirm (only when DM is open and a chat is selected)
+  if (e.altKey && e.key === 'Backspace') {
+    e.preventDefault();
+    if (dmOpen && activeDmId) {
+      openClearChatConfirm();
+    }
+  }
   if (e.key === 'Escape') {
+    if (document.getElementById('clearChatOverlay').classList.contains('show')) { closeClearChatConfirm(); return; }
     if (document.getElementById('confirmOverlay').classList.contains('show')) { closeConfirm(); return; }
     closeAdminPopup(); closeProfileEdit(); closeLogout(); closeProfileDropdown(); closeLightbox(); closeCtxMenu();
   }
@@ -3382,10 +3549,8 @@ async function preloadAllChats() {
   if (error || !data) return;
 
   const latestMap = new Map();
-
   data.forEach(msg => {
     const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-
     if (!latestMap.has(otherId)) {
       latestMap.set(otherId, msg);
     }
