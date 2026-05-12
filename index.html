@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+    <link rel="icon" type="image/png" href="faviconl.png">
+  <link rel="icon" type="image/png" href="faviconl.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hether</title>
@@ -65,6 +67,32 @@ body {
   display: flex;
   height: 100%;
   width: 100%;
+}
+
+/* ── DEFAULT AVATAR SILHOUETTE ── */
+.default-avatar {
+  background: #e8e8ec !important;
+  color: #9b9ba8 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+[data-theme="dark"] .default-avatar {
+  background: #2a2a32 !important;
+  color: #5a5a6e !important;
+}
+
+/* The silhouette SVG fills the container and is cropped by overflow:hidden on the parent */
+.default-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  flex-shrink: 0;
+  position: absolute;
+  bottom: -8%;
+  left: 0;
 }
 
 /* ── SIDEBAR ── */
@@ -177,11 +205,12 @@ body {
 
 .profile-avatar {
   width: 26px; height: 26px; border-radius: 50%;
-  background: linear-gradient(135deg, #5b6af0, #a855f7);
+  background: #e8e8ec;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #fff;
-  flex-shrink: 0; overflow: hidden;
+  font-size: 11px; font-weight: 700; color: #9b9ba8;
+  flex-shrink: 0; overflow: hidden; position: relative;
 }
+[data-theme="dark"] .profile-avatar { background: #2a2a32; color: #5a5a6e; }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 .profile-display-name {
@@ -213,11 +242,12 @@ body {
 
 .pd-avatar-large {
   width: 38px; height: 38px; border-radius: 50%;
-  background: linear-gradient(135deg, #5b6af0, #a855f7);
+  background: #e8e8ec;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 700; color: #fff;
+  font-size: 15px; font-weight: 700; color: #9b9ba8;
   flex-shrink: 0; overflow: hidden; cursor: pointer; position: relative; transition: opacity 0.15s;
 }
+[data-theme="dark"] .pd-avatar-large { background: #2a2a32; color: #5a5a6e; }
 .pd-avatar-large:hover { opacity: 0.85; }
 .pd-avatar-large img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
@@ -260,11 +290,12 @@ body {
 
 .pe-avatar-preview {
   width: 56px; height: 56px; border-radius: 50%;
-  background: linear-gradient(135deg, #5b6af0, #a855f7);
+  background: #e8e8ec;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 700; color: #fff;
-  overflow: hidden; flex-shrink: 0;
+  font-size: 22px; font-weight: 700; color: #9b9ba8;
+  overflow: hidden; flex-shrink: 0; position: relative;
 }
+[data-theme="dark"] .pe-avatar-preview { background: #2a2a32; color: #5a5a6e; }
 .pe-avatar-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 .pe-avatar-actions { display: flex; flex-direction: column; gap: 6px; }
@@ -312,7 +343,7 @@ body {
 }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
 
-.messages { flex: 1; overflow-y: auto; padding: 32px 0; scroll-behavior: smooth; }
+.messages { flex: 1; overflow-y: auto; padding: 32px 0; scroll-behavior: smooth; display: flex; flex-direction: column; }
 .messages::-webkit-scrollbar { width: 4px; }
 .messages::-webkit-scrollbar-track { background: transparent; }
 .messages::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
@@ -323,7 +354,8 @@ body {
 
 .avatar { width: 28px; height: 28px; border-radius: var(--radius); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; margin-top: 2px; }
 .avatar.ai { background: var(--accent); color: #fff; }
-.avatar.user-av { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); overflow: hidden; }
+.avatar.user-av { background: #e8e8ec; color: #9b9ba8; border: 1px solid var(--border); overflow: hidden; position: relative; }
+[data-theme="dark"] .avatar.user-av { background: #2a2a32; color: #5a5a6e; }
 .avatar.user-av img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
 
 .bubble { padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13.5px; line-height: 1.65; max-width: calc(100% - 44px); word-break: break-word; }
@@ -332,43 +364,39 @@ body {
 .bubble code { font-family: 'DM Mono', monospace; font-size: 12.5px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
 .bubble pre { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; overflow-x: auto; margin: 8px 0; font-family: 'DM Mono', monospace; font-size: 12.5px; }
 
-.message.user .media-only { background: transparent; border: none; padding: 0; }
+.message.user .media-only,
 .message.ai .media-only { background: transparent; border: none; padding: 0; }
 .chat-media-img { max-width: 260px; max-height: 220px; border-radius: 12px; display: block; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.13); }
 .chat-media-vid { max-width: 260px; border-radius: 12px; display: block; box-shadow: 0 2px 12px rgba(0,0,0,0.13); }
 
 /* ── WELCOME ── */
 .welcome {
-  max-width: 620px;
+  max-width: 520px;
+  width: 100%;
   margin: auto;
-  padding: 20px 28px;
+  padding: 40px 28px;
   text-align: center;
-  animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1);
+  animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1);
 }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 
 .welcome-greeting {
   font-family: 'DM Sans', sans-serif;
-  font-weight: 800;
-  font-size: 68px;
-  letter-spacing: -2.5px;
-  line-height: 1.05;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #5b6af0 0%, #a855f7 38%, #ec4899 68%, #f97316 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 6px;
+  color: var(--text);
   text-align: center;
 }
 
 .welcome-sub {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  color: var(--text2);
-  font-size: 17px;
-  margin-bottom: 32px;
+  color: var(--text3);
+  font-size: 14px;
+  margin-bottom: 28px;
   font-weight: 400;
-  letter-spacing: 0.1px;
+  text-align: center;
 }
 
 .suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: left; }
@@ -439,14 +467,14 @@ body {
 }
 .media-staging-send:hover { background: var(--accent-hover); }
 
-/* typing — only in chat messages, not in sidebar */
+/* typing */
 .typing-dots { display: flex; gap: 4px; padding: 4px 0; }
 .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
-/* ── DM TYPING INDICATOR (chat only) ── */
+/* ── DM TYPING INDICATOR ── */
 .dm-typing-indicator {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 0 4px;
@@ -540,7 +568,7 @@ body {
 .dm-overlay.show { display: flex; }
 
 .dm-popup {
-  width: min(900px, 94vw);
+  width: min(1000px, 98vw);
   height: min(640px, 90vh);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -553,7 +581,7 @@ body {
 }
 
 .dm-sidebar {
-  width: 280px;
+  width: 300px;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -662,7 +690,7 @@ body {
   width: 30px; height: 30px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff;
-  flex-shrink: 0; overflow: hidden;
+  flex-shrink: 0; overflow: hidden; position: relative;
 }
 .dm-search-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dm-search-name { font-size: 13px; font-weight: 500; color: var(--text); }
@@ -736,12 +764,11 @@ body {
   width: 34px; height: 34px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 700; color: #fff;
-  flex-shrink: 0; overflow: hidden;
+  flex-shrink: 0; overflow: hidden; position: relative;
 }
 .dm-chat-topbar-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dm-chat-topbar-info { flex: 1; min-width: 0; }
 .dm-chat-topbar-name { font-size: 14px; font-weight: 600; color: var(--text); }
-/* status line now holds just the presence dot, no text */
 .dm-chat-topbar-status {
   display: flex; align-items: center; gap: 5px;
   margin-top: 2px;
@@ -805,7 +832,7 @@ body {
   width: 28px; height: 28px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; color: #fff;
-  flex-shrink: 0; overflow: hidden; align-self: flex-end;
+  flex-shrink: 0; overflow: hidden; align-self: flex-end; position: relative;
 }
 .dm-group-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dm-group-avatar.hidden-av { visibility: hidden; }
@@ -927,6 +954,7 @@ body {
   background: transparent !important;
   border: none !important;
   padding: 0 !important;
+  border-radius: 0 !important;
 }
 .dm-bubble-media-only img, .dm-bubble-media-only video {
   max-width: 220px; max-height: 180px; border-radius: 12px; display: block; cursor: pointer;
@@ -1067,11 +1095,10 @@ body {
 .dm-fs-back:hover { background: var(--surface2); }
 .dm-fs-back svg { width: 18px; height: 18px; }
 
-.dm-fs-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; overflow: hidden; flex-shrink: 0; }
+.dm-fs-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; overflow: hidden; flex-shrink: 0; position: relative; }
 .dm-fs-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dm-fs-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
 
-/* Mobile DM header status dot */
 .dm-fs-status-wrap {
   display: flex; align-items: center; gap: 5px;
   margin-left: 4px;
@@ -1275,25 +1302,42 @@ body {
 @media (max-width: 640px) {
   :root { --sidebar-w: 80vw; }
   body { position: relative; }
-  .sidebar { position: fixed; z-index: 100; box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
+  .sidebar {
+    position: fixed; z-index: 100; box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+    height: 100dvh;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 20px));
+    overflow-y: auto;
+  }
   .sidebar.mini { transform: translateX(-100%); width: var(--sidebar-w); }
-  .main { margin-left: 0 !important; width: 100%; }
+  .main { margin-left: 0 !important; width: 100%; height: 100dvh; }
   .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99; }
   .mobile-overlay.show { display: block; }
   .hamburger { display: flex; }
   .chat-header { padding: 12px 16px; }
-  .input-area { padding: 10px 12px 16px; }
-  .messages { padding: 20px 0; }
+  .input-area {
+    padding: 10px 12px;
+    padding-bottom: max(20px, calc(16px + env(safe-area-inset-bottom, 20px)));
+  }
+  .messages { padding: 20px 0 8px; }
   .message { padding: 0 14px; }
-  .settings-view { padding: 24px 20px; }
+  .settings-view {
+    padding: 20px 16px;
+    padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom, 20px)));
+  }
   .suggestions { grid-template-columns: 1fr; }
-  .welcome-greeting { font-size: 44px !important; letter-spacing: -1.5px !important; }
-  .welcome { padding: 16px 16px; }
-  .profile-dropdown { left: 6px; bottom: 68px; }
+  .welcome-greeting { font-size: 22px !important; letter-spacing: -0.3px !important; }
+  .welcome { padding: 20px 16px; margin: auto; text-align: center; }
+  .profile-dropdown { left: 6px; bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   .dm-overlay { display: none !important; }
   .dm-fullscreen.show { display: flex; }
   .notes-list-panel { width: 200px; }
   .dm-msg-group-row { max-width: 85%; }
+  .dm-fs-input-area {
+    padding: 8px 10px;
+    padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 20px)));
+  }
+  .dm-fullscreen { height: 100dvh; }
+  .sidebar-spacer { flex: 1; min-height: 8px; }
 }
 
 @media (min-width: 641px) {
@@ -1486,6 +1530,180 @@ body {
   background: var(--surface2);
   animation: shimmer 1.4s infinite;
 }
+/* ── CODE EDITOR VIEW ── */
+.code-editor-view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.code-editor-view.show { display: flex; }
+
+.code-editor-header {
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: var(--surface); display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.code-editor-header h2 { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+
+.lang-select {
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px; cursor: pointer; outline: none; transition: border-color var(--t);
+}
+.lang-select:focus { border-color: var(--accent); }
+
+.run-btn {
+  padding: 6px 14px; border-radius: var(--radius); border: none;
+  background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: background var(--t);
+  display: flex; align-items: center; gap: 6px;
+}
+.run-btn:hover { background: var(--accent-hover); }
+.run-btn svg { width: 12px; height: 12px; }
+
+.clear-output-btn {
+  padding: 6px 10px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: transparent; color: var(--text3); font-family: 'DM Sans', sans-serif;
+  font-size: 12px; cursor: pointer; transition: all var(--t);
+}
+.clear-output-btn:hover { border-color: var(--text2); color: var(--text); background: var(--surface2); }
+
+.code-editor-body { flex: 1; display: flex; overflow: hidden; }
+
+.code-pane {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border);
+}
+.code-pane-label {
+  padding: 8px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--text3); background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#codeInput {
+  flex: 1; background: var(--bg); color: var(--text); border: none; outline: none;
+  font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.65;
+  padding: 16px 16px 16px 0; resize: none; tab-size: 2; overflow-y: auto;
+  width: 100%; min-height: 100%;
+}
+#codeInput::placeholder { color: var(--text3); }
+
+.code-editor-with-lines {
+  flex: 1; display: flex; overflow: auto; background: var(--bg);
+}
+
+.code-line-numbers {
+  flex-shrink: 0; width: 42px; padding: 16px 8px 16px 0;
+  font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.65;
+  color: var(--text3); text-align: right; user-select: none;
+  background: var(--bg); border-right: 1px solid var(--border);
+  margin-right: 12px; white-space: pre;
+}
+
+.output-pane {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+
+#codeOutput {
+  flex: 1; background: var(--bg); border: none; overflow: hidden;
+}
+
+#codeOutputText {
+  flex: 1; overflow-y: auto; padding: 16px; font-family: 'DM Mono', monospace;
+  font-size: 12.5px; line-height: 1.65; color: var(--text); background: var(--bg);
+  white-space: pre-wrap; word-break: break-all;
+}
+#codeOutputText .output-error { color: #ef4444; }
+#codeOutputText .output-ok { color: #22c55e; }
+
+.code-editor-mobile-stack .code-pane { border-right: none; border-bottom: 1px solid var(--border); }
+
+@media (max-width: 640px) {
+  .code-editor-body { flex-direction: column; }
+  .code-pane { border-right: none; border-bottom: 1px solid var(--border); max-height: 50%; }
+  .output-pane { max-height: 50%; }
+}
+
+/* ── MINI CALCULATOR WIDGET ── */
+.mini-calc-widget {
+  position: fixed;
+  bottom: 80px;
+  left: calc(var(--sidebar-mini) + 12px);
+  z-index: 300;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  width: 240px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: none;
+  animation: popIn 0.18s cubic-bezier(0.4,0,0.2,1);
+}
+.mini-calc-widget.show { display: block; }
+.mini-calc-display {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; text-align: right; margin-bottom: 10px;
+  min-height: 52px; display: flex; flex-direction: column; justify-content: flex-end;
+}
+.mini-calc-expr { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; min-height: 14px; }
+.mini-calc-result { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+.mini-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.mini-calc-btn {
+  padding: 9px 6px; border: none; border-radius: 7px; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all var(--t); font-family: 'DM Sans', sans-serif; color: var(--text);
+  background: var(--surface2);
+}
+.mini-calc-btn:hover { opacity: 0.75; }
+.mini-calc-btn:active { transform: scale(0.95); }
+.mini-calc-btn.op { background: rgba(91,106,240,0.1); color: var(--accent); }
+.mini-calc-btn.eq { background: var(--accent); color: #fff; }
+.mini-calc-btn.eq:hover { background: var(--accent-hover); opacity: 1; }
+.mini-calc-btn.clr { background: rgba(239,68,68,0.1); color: #ef4444; }
+.mini-calc-btn.span2 { grid-column: span 2; }
+
+/* ── CALCULATOR VIEW ── */
+.calc-view { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg); }
+.calc-view.show { display: flex; }
+.calc-container {
+  margin: auto; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; width: 300px; box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+.calc-display {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 14px; text-align: right; margin-bottom: 14px;
+  min-height: 70px; display: flex; flex-direction: column; justify-content: flex-end;
+}
+.calc-expr { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; min-height: 16px; }
+.calc-result { font-size: 28px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.calc-btn {
+  padding: 13px; border: none; border-radius: 8px; font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: all var(--t); font-family: 'DM Sans', sans-serif; color: var(--text);
+  background: var(--surface2);
+}
+.calc-btn:hover { opacity: 0.8; }
+.calc-btn.op { background: rgba(91,106,240,0.1); color: var(--accent); }
+.calc-btn.eq { background: var(--accent); color: #fff; }
+.calc-btn.eq:hover { background: var(--accent-hover); }
+.calc-btn.clr { background: rgba(239,68,68,0.1); color: #ef4444; }
+.calc-btn.span2 { grid-column: span 2; }
+
+/* ── HISTORY VIEW ── */
+.history-view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.history-view.show { display: flex; }
+.history-header {
+  padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.history-header h2 { font-size: 14px; font-weight: 600; flex: 1; }
+.history-list { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.history-item {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 10px; background: var(--surface);
+  cursor: pointer; transition: border-color var(--t), background var(--t);
+}
+.history-item:hover { border-color: var(--accent); background: var(--surface2); }
+.history-item-q { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-item-a { font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-item-time { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.history-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text3); gap: 8px; }
+.history-empty svg { opacity: 0.25; }
+.history-empty p { font-size: 13.5px; opacity: 0.7; }
+
 @keyframes shimmer {
   0%,100% { opacity: 0.5; }
   50% { opacity: 1; }
@@ -1579,16 +1797,21 @@ body {
     <span class="logo-text">hether</span>
   </div>
 
-  <div class="section-label">Chat</div>
-
-  <button class="new-chat-btn" onclick="newChat()" data-tip="New chat">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    <span class="nav-btn-label">New chat</span>
-  </button>
+  <div class="section-label">Workspace</div>
 
   <button class="nav-btn active" id="navChat" onclick="showView('chat')" data-tip="hetherGPT">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     <span class="nav-btn-label">hetherGPT</span>
+  </button>
+
+  <button class="nav-btn" id="navCode" onclick="showView('code')" data-tip="Code Editor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    <span class="nav-btn-label">Code Editor</span>
+  </button>
+
+  <button class="nav-btn" id="navCalc" onclick="toggleCalcWidget()" data-tip="Calculator">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>
+    <span class="nav-btn-label">Calculator</span>
   </button>
 
   <button class="nav-btn" id="navNotes" onclick="showView('notes')" data-tip="Notes">
@@ -1606,8 +1829,8 @@ body {
   <div class="sidebar-spacer"></div>
 
   <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown()" data-tip="Profile">
-    <div class="profile-avatar" id="sidebarProfileAvatar">
-      <span id="sidebarAvatarInitial">U</span>
+    <div class="profile-avatar default-avatar" id="sidebarProfileAvatar">
+      <!-- filled by JS -->
     </div>
     <span class="profile-display-name" id="sidebarProfileName">User</span>
   </button>
@@ -1616,8 +1839,8 @@ body {
 <!-- PROFILE DROPDOWN -->
 <div class="profile-dropdown" id="profileDropdown">
   <div class="pd-header">
-    <div class="pd-avatar-large" id="pdAvatarLarge" onclick="openProfileEdit()">
-      <span id="pdAvatarInitial">U</span>
+    <div class="pd-avatar-large default-avatar" id="pdAvatarLarge" onclick="openProfileEdit()">
+      <!-- filled by JS -->
       <div class="pd-avatar-overlay">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </div>
@@ -1753,6 +1976,91 @@ body {
     </div>
   </div>
 
+  <!-- CODE EDITOR VIEW -->
+  <div class="code-editor-view" id="codeView">
+    <div class="code-editor-header">
+      <button class="hamburger" style="display:flex;" onclick="toggleSidebarMobile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h2>Code Editor</h2>
+      <select class="lang-select" id="langSelect" onchange="onLangChange()">
+        <option value="html">HTML / CSS / JS</option>
+        <option value="javascript">JavaScript (console)</option>
+        <option value="java">Java (simulated)</option>
+      </select>
+      <button class="clear-output-btn" onclick="clearCodeOutput()">Clear</button>
+      <button class="run-btn" onclick="runCode()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Run
+      </button>
+    </div>
+    <div class="code-editor-body">
+      <div class="code-pane">
+        <div class="code-pane-label">Editor</div>
+        <div class="code-editor-with-lines" id="codeEditorWrap">
+          <div class="code-line-numbers" id="codeLineNumbers">1</div>
+          <textarea id="codeInput" spellcheck="false" placeholder="// Write your code here...
+// HTML mode: full HTML/CSS/JS previewed in iframe
+// JS mode: output shown in console panel
+// Java mode: simulated output"></textarea>
+        </div>
+      </div>
+      <div class="output-pane">
+        <div class="code-pane-label">Output / Preview</div>
+        <iframe id="codeOutput" style="flex:1;border:none;width:100%;height:100%;background:var(--bg);display:none;"></iframe>
+        <div id="codeOutputText" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATOR VIEW -->
+  <div class="calc-view" id="calcView">
+    <div class="code-editor-header">
+      <button class="hamburger" style="display:flex;" onclick="toggleSidebarMobile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h2>Calculator</h2>
+    </div>
+    <div class="calc-container">
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr"></div>
+        <div class="calc-result" id="calcResult">0</div>
+      </div>
+      <div class="calc-grid">
+        <button class="calc-btn clr span2" onclick="calcAction('AC')">AC</button>
+        <button class="calc-btn op" onclick="calcAction('%')">%</button>
+        <button class="calc-btn op" onclick="calcAction('/')">÷</button>
+        <button class="calc-btn" onclick="calcAction('7')">7</button>
+        <button class="calc-btn" onclick="calcAction('8')">8</button>
+        <button class="calc-btn" onclick="calcAction('9')">9</button>
+        <button class="calc-btn op" onclick="calcAction('*')">×</button>
+        <button class="calc-btn" onclick="calcAction('4')">4</button>
+        <button class="calc-btn" onclick="calcAction('5')">5</button>
+        <button class="calc-btn" onclick="calcAction('6')">6</button>
+        <button class="calc-btn op" onclick="calcAction('-')">−</button>
+        <button class="calc-btn" onclick="calcAction('1')">1</button>
+        <button class="calc-btn" onclick="calcAction('2')">2</button>
+        <button class="calc-btn" onclick="calcAction('3')">3</button>
+        <button class="calc-btn op" onclick="calcAction('+')">+</button>
+        <button class="calc-btn span2" onclick="calcAction('0')">0</button>
+        <button class="calc-btn" onclick="calcAction('.')">.</button>
+        <button class="calc-btn eq" onclick="calcAction('=')">=</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT HISTORY VIEW -->
+  <div class="history-view" id="historyView">
+    <div class="history-header">
+      <button class="hamburger" style="display:flex;" onclick="toggleSidebarMobile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h2>Chat History</h2>
+      <button class="clear-output-btn" onclick="clearAllHistory()" style="margin-left:auto;">Clear all</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
   <!-- SETTINGS VIEW -->
   <div class="settings-view" id="settingsView">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
@@ -1778,9 +2086,34 @@ body {
       <div class="setting-row">
         <div>
           <div class="setting-label">Clear history</div>
-          <div class="setting-sub">Remove all saved messages</div>
+          <div class="setting-sub">Remove all saved messages from this device</div>
         </div>
         <button class="settings-btn danger" onclick="clearHistory()">Clear</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Data &amp; Storage</h3>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Local storage usage</div>
+          <div class="setting-sub" id="storageUsageText">Calculating…</div>
+        </div>
+        <button class="settings-btn" onclick="calcStorageUsage()">Refresh</button>
+      </div>
+      <div class="setting-row clickable" onclick="exportData()">
+        <div>
+          <div class="setting-label">Export my data</div>
+          <div class="setting-sub">Download notes and chat history as JSON</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Clear all local data</div>
+          <div class="setting-sub">Wipes notes, history, and preferences from this device</div>
+        </div>
+        <button class="settings-btn danger" onclick="clearAllData()">Wipe</button>
       </div>
     </div>
 
@@ -1788,10 +2121,52 @@ body {
       <h3>Administration</h3>
       <div class="setting-row clickable" onclick="openAdminPopup()">
         <div>
-          <div class="setting-label">Admin Key <span style="font-size:12px;color:var(--text3);font-weight:400;">(Only For Admins)</span></div>
-          <div class="setting-sub">Restricted access — authorized personnel only</div>
+          <div class="setting-label">Admin Key <span style="font-size:12px;color:var(--text3);font-weight:400;">(Authorized Personnel Only)</span></div>
+          <div class="setting-sub">Restricted access — requires valid credentials</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>About</h3>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">hether</div>
+          <div class="setting-sub">Version 1.0.0 — AI assistant &amp; messaging platform</div>
+        </div>
+      </div>
+      <div class="setting-row clickable" onclick="showModal('privacy')">
+        <div>
+          <div class="setting-label">Privacy Policy</div>
+          <div class="setting-sub">How we handle your data</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="setting-row clickable" onclick="showModal('terms')">
+        <div>
+          <div class="setting-label">Terms of Service</div>
+          <div class="setting-sub">Rules and usage guidelines</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="setting-row clickable" onclick="showModal('security')">
+        <div>
+          <div class="setting-label">Security Information</div>
+          <div class="setting-sub">How your data is protected</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL for Privacy / Terms / Security -->
+  <div class="overlay" id="infoModalOverlay" onclick="closeInfoModal()">
+    <div class="popup" style="width:min(520px,95vw);max-height:80vh;overflow-y:auto;" onclick="event.stopPropagation()">
+      <h3 id="infoModalTitle" style="margin-bottom:12px;"></h3>
+      <div id="infoModalBody" style="font-size:13px;line-height:1.7;color:var(--text2);max-height:55vh;overflow-y:auto;"></div>
+      <div class="popup-btns" style="margin-top:16px;">
+        <button class="btn-confirm" onclick="closeInfoModal()">Close</button>
       </div>
     </div>
   </div>
@@ -1830,7 +2205,6 @@ body {
           <div class="dm-chat-topbar-avatar" id="dmTopbarAvatar"></div>
           <div class="dm-chat-topbar-info">
             <div class="dm-chat-topbar-name" id="dmTopbarName"></div>
-            <!-- Presence dot replaces "Active now" text — only shown here in header -->
             <div class="dm-chat-topbar-status" id="dmTopbarStatus">
               <span class="dm-presence-dot offline" id="dmPresenceDot"></span>
             </div>
@@ -1905,8 +2279,7 @@ body {
       <button class="dm-fs-back" onclick="dmFsBack()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div class="dm-fs-avatar" id="dmFsAvatar"></div>
-      <!-- Mobile: name + presence dot side by side -->
+      <div class="dm-fs-avatar default-avatar" id="dmFsAvatar"></div>
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:7px;">
         <div class="dm-fs-name" id="dmFsName"></div>
         <span class="dm-presence-dot offline" id="dmFsPresenceDot"></span>
@@ -1976,7 +2349,7 @@ body {
   <div class="popup">
     <h3>Admin Key</h3>
     <p>Enter your administrator key to continue.</p>
-    <input type="password" id="adminInput" placeholder="••••••••••••••••" onkeydown="adminKeyHandler(event)">
+    <input type="password" id="adminInput" name="new password" autocomplete="new-password" placeholder="Enter admin key" onkeydown="adminKeyHandler(event)">
     <div class="popup-error" id="adminError">Incorrect key. Try again.</div>
     <div class="popup-btns">
       <button class="btn-cancel" onclick="closeAdminPopup()">Cancel</button>
@@ -1990,7 +2363,9 @@ body {
   <div class="profile-edit-popup">
     <h3>Edit Profile</h3>
     <div class="pe-avatar-section">
-      <div class="pe-avatar-preview" id="peAvatarPreview"><span id="peAvatarInitial">U</span></div>
+      <div class="pe-avatar-preview default-avatar" id="peAvatarPreview">
+        <!-- filled by JS -->
+      </div>
       <div class="pe-avatar-actions">
         <label class="pe-img-label" for="peImageUpload">Upload photo</label>
         <input type="file" id="peImageUpload" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
@@ -2045,8 +2420,50 @@ body {
 
 </div><!-- /mainApp -->
 
+<!-- MINI CALCULATOR WIDGET -->
+<div class="mini-calc-widget" id="miniCalcWidget">
+  <div class="mini-calc-display">
+    <div class="mini-calc-expr" id="miniCalcExpr"></div>
+    <div class="mini-calc-result" id="miniCalcResult">0</div>
+  </div>
+  <div class="mini-calc-grid">
+    <button class="mini-calc-btn clr span2" onclick="miniCalcAction('AC')">AC</button>
+    <button class="mini-calc-btn op" onclick="miniCalcAction('%')">%</button>
+    <button class="mini-calc-btn op" onclick="miniCalcAction('/')">÷</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('7')">7</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('8')">8</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('9')">9</button>
+    <button class="mini-calc-btn op" onclick="miniCalcAction('*')">×</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('4')">4</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('5')">5</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('6')">6</button>
+    <button class="mini-calc-btn op" onclick="miniCalcAction('-')">−</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('1')">1</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('2')">2</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('3')">3</button>
+    <button class="mini-calc-btn op" onclick="miniCalcAction('+')">+</button>
+    <button class="mini-calc-btn span2" onclick="miniCalcAction('0')">0</button>
+    <button class="mini-calc-btn" onclick="miniCalcAction('.')">.</button>
+    <button class="mini-calc-btn eq" onclick="miniCalcAction('=')">=</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
+/* ────────────────────────────────────────────
+   FIX 1: PROPER DEFAULT AVATAR SVG
+   Head = circle, body = semicircle that fills
+   the bottom half so it looks complete when
+   cropped by the circular overflow:hidden.
+   Uses fill so it renders solidly at any size.
+──────────────────────────────────────────── */
+const DEFAULT_AVATAR_SVG = `<svg viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- head -->
+  <circle cx="20" cy="13" r="8" fill="currentColor"/>
+  <!-- body: a full ellipse anchored at the bottom so it fills the circle crop -->
+  <ellipse cx="20" cy="40" rx="16" ry="13" fill="currentColor"/>
+</svg>`;
 
 let currentUser = null;
 
@@ -2072,9 +2489,8 @@ const subscriptionManager = {
 };
 
 // ── PRESENCE SYSTEM ──
-// Only active when admin DM is open. Tracks who is online in the admin chat.
 let presenceChannel = null;
-let onlineUsers = new Set(); // set of user IDs currently online in admin DM
+let onlineUsers = new Set();
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -2091,20 +2507,11 @@ async function joinPresence() {
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
       onlineUsers.clear();
-      Object.keys(state).forEach(key => {
-        // key is the presence key (user id)
-        onlineUsers.add(key);
-      });
+      Object.keys(state).forEach(key => { onlineUsers.add(key); });
       updatePresenceDots();
     })
-    .on('presence', { event: 'join' }, ({ key }) => {
-      onlineUsers.add(key);
-      updatePresenceDots();
-    })
-    .on('presence', { event: 'leave' }, ({ key }) => {
-      onlineUsers.delete(key);
-      updatePresenceDots();
-    })
+    .on('presence', { event: 'join' }, ({ key }) => { onlineUsers.add(key); updatePresenceDots(); })
+    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); updatePresenceDots(); })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
@@ -2123,25 +2530,14 @@ async function leavePresence() {
 }
 
 function updatePresenceDots() {
-  // Only update for the currently active chat contact
   if (!activeDmId) return;
   const isOnline = onlineUsers.has(activeDmId);
-
-  // Desktop dot
   const dot = document.getElementById('dmPresenceDot');
-  if (dot) {
-    dot.classList.toggle('online', isOnline);
-    dot.classList.toggle('offline', !isOnline);
-  }
-  // Mobile dot
+  if (dot) { dot.classList.toggle('online', isOnline); dot.classList.toggle('offline', !isOnline); }
   const fsDot = document.getElementById('dmFsPresenceDot');
-  if (fsDot) {
-    fsDot.classList.toggle('online', isOnline);
-    fsDot.classList.toggle('offline', !isOnline);
-  }
+  if (fsDot) { fsDot.classList.toggle('online', isOnline); fsDot.classList.toggle('offline', !isOnline); }
 }
 
-// Reset dots to offline when chat changes
 function resetPresenceDots() {
   ['dmPresenceDot', 'dmFsPresenceDot'].forEach(id => {
     const el = document.getElementById(id);
@@ -2149,7 +2545,7 @@ function resetPresenceDots() {
   });
 }
 
-// ── TYPING INDICATOR (realtime via Supabase Broadcast) ──
+// ── TYPING INDICATOR ──
 let typingChannel = null;
 let typingTimer = null;
 let isCurrentlyTyping = false;
@@ -2160,13 +2556,10 @@ async function setupTypingChannel(myUserId, otherUserId) {
     await supabaseClient.removeChannel(typingChannel);
     typingChannel = null;
   }
-
   const channelName = [myUserId, otherUserId].sort().join(':');
-
   typingChannel = supabaseClient.channel(`typing:${channelName}`, {
     config: { broadcast: { self: false } }
   });
-
   typingChannel
     .on('broadcast', { event: 'typing' }, ({ payload }) => {
       if (payload.userId === myUserId) return;
@@ -2186,7 +2579,6 @@ function showRemoteTyping(userId) {
   const contact = dmContacts.find(c => c.id === userId);
   const msgsEl = document.getElementById('dmChatMessages');
   const fsMsgsEl = document.getElementById('dmFsMessages');
-
   [{ el: msgsEl, id: 'dmTypingDots' }, { el: fsMsgsEl, id: 'dmFsTypingDots' }].forEach(({ el, id }) => {
     if (!el) return;
     let existing = document.getElementById(id);
@@ -2195,12 +2587,10 @@ function showRemoteTyping(userId) {
       existing.id = id;
       existing.className = 'dm-typing-indicator';
       existing.innerHTML = `
-        <div class="dm-typing-avatar" style="background:${contact ? contact.color : '#6664c2'};">
-          ${contact && contact.avatarUrl ? `<img src="${contact.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (contact ? contact.initials : '?')}
+        <div class="dm-typing-avatar default-avatar" style="width:24px;height:24px;border-radius:50%;overflow:hidden;position:relative;background:#e8e8ec;">
+          ${contact && contact.avatarUrl ? `<img src="${contact.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : DEFAULT_AVATAR_SVG}
         </div>
-        <div class="dm-typing-bubble">
-          <span></span><span></span><span></span>
-        </div>
+        <div class="dm-typing-bubble"><span></span><span></span><span></span></div>
       `;
       el.appendChild(existing);
     }
@@ -2218,42 +2608,23 @@ function hideRemoteTyping() {
 function broadcastTyping(isTyping) {
   if (!typingChannel || !activeDmId || !currentUser) return;
   if (typingChannel.state !== 'joined') return;
-
-  typingChannel.send({
-    type: 'broadcast',
-    event: 'typing',
-    payload: { userId: currentUser.id, isTyping }
-  });
+  typingChannel.send({ type: 'broadcast', event: 'typing', payload: { userId: currentUser.id, isTyping } });
 }
 
 function onDmInputChange(mode) {
   toggleDmSendBtn();
-
   const val = document.getElementById('dmInput').value.trim();
-
   if (val.length > 0) {
-    if (!isCurrentlyTyping) {
-      isCurrentlyTyping = true;
-      broadcastTyping(true);
-    }
+    if (!isCurrentlyTyping) { isCurrentlyTyping = true; broadcastTyping(true); }
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-      isCurrentlyTyping = false;
-      broadcastTyping(false);
-    }, 4000);
+    typingTimer = setTimeout(() => { isCurrentlyTyping = false; broadcastTyping(false); }, 4000);
   } else {
-    if (isCurrentlyTyping) {
-      isCurrentlyTyping = false;
-      clearTimeout(typingTimer);
-      broadcastTyping(false);
-    }
+    if (isCurrentlyTyping) { isCurrentlyTyping = false; clearTimeout(typingTimer); broadcastTyping(false); }
   }
 }
 
 function stopTypingBroadcast() {
-  isCurrentlyTyping = false;
-  clearTimeout(typingTimer);
-  broadcastTyping(false);
+  isCurrentlyTyping = false; clearTimeout(typingTimer); broadcastTyping(false);
 }
 
 // ── CLEAR CHAT UI ──
@@ -2263,63 +2634,37 @@ function clearChatUI() {
   const fsMsgsEl = document.getElementById('dmFsMessages');
   if (fsMsgsEl) fsMsgsEl.innerHTML = '';
   renderedMsgIds.clear();
-
   const contact = dmContacts.find(c => c.id === activeDmId);
-  if (contact) {
-    contact.lastMessage = null;
-    contact.lastMessageTs = 0;
-    contact.unread = false;
-  }
-
-  if (!isMobile()) {
-    showDmEmptyState();
-    activeDmId = null;
-    document.querySelectorAll('#dmConvList .dm-conv-item, #dmFsConvList .dm-conv-item')
-      .forEach(el => el.classList.remove('active'));
-  }
-
+  if (contact) { contact.lastMessage = null; contact.lastMessageTs = 0; contact.unread = false; }
+  if (!isMobile()) { showDmEmptyState(); activeDmId = null; document.querySelectorAll('#dmConvList .dm-conv-item, #dmFsConvList .dm-conv-item').forEach(el => el.classList.remove('active')); }
   buildDMConvList();
 }
 
-// ── CLEAR CHAT CONFIRM ──
 function openClearChatConfirm() {
   if (!activeDmId) return;
   document.getElementById('clearChatOverlay').classList.add('show');
   setTimeout(() => document.getElementById('clearChatConfirmBtn').focus(), 50);
 }
-
-function closeClearChatConfirm() {
-  document.getElementById('clearChatOverlay').classList.remove('show');
-}
+function closeClearChatConfirm() { document.getElementById('clearChatOverlay').classList.remove('show'); }
 
 async function confirmClearChat() {
   closeClearChatConfirm();
   if (!activeDmId) return;
-
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-
-  const { error } = await supabaseClient
-    .from('messages')
-    .delete()
-    .or(
-      `and(sender_id.eq.${user.id},receiver_id.eq.${activeDmId}),and(sender_id.eq.${activeDmId},receiver_id.eq.${user.id})`
-    );
-
-  if (error) {
-    alert('Failed to clear chat: ' + error.message);
-  }
+  const { error } = await supabaseClient.from('messages').delete()
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${activeDmId}),and(sender_id.eq.${activeDmId},receiver_id.eq.${user.id})`);
+  if (error) alert('Failed to clear chat: ' + error.message);
 }
 
 document.getElementById('clearChatOverlay').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); confirmClearChat(); }
-  if (e.key === 'Escape') { closeClearChatConfirm(); }
+  if (e.key === 'Escape') closeClearChatConfirm();
 });
 
 // ── CONSTANTS & STATE ──
 const ADMIN_KEY = 'adminm1ik33yshamwaviii';
 let adminAuthenticated = false;
-
 let currentView = 'chat';
 let isTyping = false;
 let chatHistory = [];
@@ -2341,53 +2686,40 @@ let profile = JSON.parse(localStorage.getItem('hether_profile') || 'null') || {
   name: 'User', username: '@user', email: 'user@example.com', avatarUrl: null
 };
 
-// ── MSG ACTION MENU (3-dot) ──
+// ── MSG ACTION MENU ──
 let _actionMenuOpen = false;
 
 function showMsgActionMenu(e, bWrap, msg, isSent) {
   e.stopPropagation();
   const menu = document.getElementById('dmMsgActionMenu');
   menu.innerHTML = '';
-
   const text = bWrap.dataset.text || '';
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'dm-msg-action-item';
   copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-  copyBtn.onclick = (ev) => {
-    ev.stopPropagation();
-    if (text) { navigator.clipboard.writeText(text).catch(() => {}); }
-    closeMsgActionMenu();
-  };
+  copyBtn.onclick = (ev) => { ev.stopPropagation(); if (text) navigator.clipboard.writeText(text).catch(() => {}); closeMsgActionMenu(); };
   menu.appendChild(copyBtn);
 
   if (isSent && msg && msg.id) {
     const unsendBtn = document.createElement('button');
     unsendBtn.className = 'dm-msg-action-item danger';
     unsendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Unsend`;
-    unsendBtn.onclick = async (ev) => {
-      ev.stopPropagation();
-      closeMsgActionMenu();
-      await unsendMessage(msg.id);
-    };
+    unsendBtn.onclick = async (ev) => { ev.stopPropagation(); closeMsgActionMenu(); await unsendMessage(msg.id); };
     menu.appendChild(unsendBtn);
   }
 
   const btn = e.currentTarget || e.target;
   const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: e.clientX, top: e.clientY, width: 0, height: 0 };
   let left = rect.left;
-  let top = rect.top - 8;
-
   menu.style.display = 'block';
   menu.classList.add('show');
   _actionMenuOpen = true;
-
   requestAnimationFrame(() => {
-    const mw = menu.offsetWidth;
-    const mh = menu.offsetHeight;
+    const mw = menu.offsetWidth, mh = menu.offsetHeight;
     if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
     if (left < 8) left = 8;
-    top = rect.top - mh - 4;
+    let top = rect.top - mh - 4;
     if (top < 8) top = rect.bottom + 4;
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
@@ -2396,25 +2728,16 @@ function showMsgActionMenu(e, bWrap, msg, isSent) {
 
 function closeMsgActionMenu() {
   const menu = document.getElementById('dmMsgActionMenu');
-  menu.classList.remove('show');
-  menu.style.display = 'none';
-  _actionMenuOpen = false;
+  menu.classList.remove('show'); menu.style.display = 'none'; _actionMenuOpen = false;
 }
 
 async function unsendMessage(msgId) {
-  const { error } = await supabaseClient
-    .from('messages')
-    .delete()
-    .eq('id', msgId);
-  if (error) {
-    alert('Failed to unsend message: ' + error.message);
-  }
+  const { error } = await supabaseClient.from('messages').delete().eq('id', msgId);
+  if (error) alert('Failed to unsend message: ' + error.message);
 }
 
 document.addEventListener('click', (e) => {
-  if (_actionMenuOpen && !document.getElementById('dmMsgActionMenu').contains(e.target)) {
-    closeMsgActionMenu();
-  }
+  if (_actionMenuOpen && !document.getElementById('dmMsgActionMenu').contains(e.target)) closeMsgActionMenu();
 });
 
 // ── CONFIRM DIALOG ──
@@ -2426,14 +2749,8 @@ function showConfirm(title, msg, okLabel, callback) {
   _confirmCallback = callback;
   document.getElementById('confirmOverlay').classList.add('show');
 }
-function closeConfirm() {
-  document.getElementById('confirmOverlay').classList.remove('show');
-  _confirmCallback = null;
-}
-function confirmAction() {
-  closeConfirm();
-  if (_confirmCallback) _confirmCallback();
-}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('show'); _confirmCallback = null; }
+function confirmAction() { closeConfirm(); if (_confirmCallback) _confirmCallback(); }
 
 // ── SEARCH ──
 function onDmSearch(val) {
@@ -2456,28 +2773,22 @@ function renderSearchDropdown(dropdown, matches, mode) {
   dropdown.innerHTML = '';
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="dm-search-empty">No users found</div>';
-    dropdown.classList.add('show');
-    return;
+    dropdown.classList.add('show'); return;
   }
   const sorted = [...matches].sort((a, b) => a.name.localeCompare(b.name));
   sorted.forEach(c => {
     const item = document.createElement('div');
     item.className = 'dm-search-item';
     item.innerHTML = `
-      <div class="dm-search-avatar" style="background:${c.color};">
-        ${c.avatarUrl ? `<img src="${c.avatarUrl}" alt="">` : c.initials}
+      <div class="dm-search-avatar default-avatar" style="background:#e8e8ec;overflow:hidden;position:relative;">
+        ${c.avatarUrl ? `<img src="${c.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0;">` : DEFAULT_AVATAR_SVG}
       </div>
       <div class="dm-search-name">${escHtml(c.name)}</div>
     `;
     item.onclick = () => {
       dropdown.classList.remove('show');
-      if (mode === 'mobile') {
-        document.getElementById('dmFsSearchInput').value = '';
-        openFsChat(c.id);
-      } else {
-        document.getElementById('dmSearchInput').value = '';
-        openDesktopChat(c.id);
-      }
+      if (mode === 'mobile') { document.getElementById('dmFsSearchInput').value = ''; openFsChat(c.id); }
+      else { document.getElementById('dmSearchInput').value = ''; openDesktopChat(c.id); }
     };
     dropdown.appendChild(item);
   });
@@ -2505,19 +2816,40 @@ async function saveProfile() {
 
 function getInitial(name) { return (name || 'U').trim()[0].toUpperCase(); }
 
+/* FIX 1: Avatar rendering helper — uses proper silhouette SVG */
+function setAvatarEl(el, avatarUrl) {
+  el.innerHTML = '';
+  if (avatarUrl) {
+    el.classList.remove('default-avatar');
+    const img = document.createElement('img');
+    img.src = avatarUrl;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;';
+    el.appendChild(img);
+  } else {
+    el.classList.add('default-avatar');
+    el.innerHTML = DEFAULT_AVATAR_SVG;
+  }
+}
+
 function renderProfileEverywhere() {
-  const initial = getInitial(profile.name);
-  document.getElementById('sidebarProfileName').textContent = profile.name;
+  // Sidebar avatar
   const sAvEl = document.getElementById('sidebarProfileAvatar');
-  sAvEl.innerHTML = profile.avatarUrl ? `<img src="${profile.avatarUrl}" alt="">` : `<span>${initial}</span>`;
+  setAvatarEl(sAvEl, profile.avatarUrl);
+  document.getElementById('sidebarProfileName').textContent = profile.name;
+
+  // Profile dropdown header
   document.getElementById('pdDisplayName').textContent = profile.name;
   document.getElementById('pdEmail').textContent = profile.email;
   const pdAvEl = document.getElementById('pdAvatarLarge');
-  const pdOverlay = `<div class="pd-avatar-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
-  pdAvEl.innerHTML = profile.avatarUrl ? `<img src="${profile.avatarUrl}" alt="">${pdOverlay}` : `<span id="pdAvatarInitial">${initial}</span>${pdOverlay}`;
+  const overlay = pdAvEl.querySelector('.pd-avatar-overlay');
+  setAvatarEl(pdAvEl, profile.avatarUrl);
+  if (overlay) pdAvEl.appendChild(overlay); // re-attach overlay
+
   document.getElementById('acc0Name').textContent = `${profile.name} (current)`;
+
+  // Profile edit preview
   const peEl = document.getElementById('peAvatarPreview');
-  peEl.innerHTML = profile.avatarUrl ? `<img src="${profile.avatarUrl}" alt="">` : `<span id="peAvatarInitial">${initial}</span>`;
+  setAvatarEl(peEl, profile.avatarUrl);
 }
 renderProfileEverywhere();
 
@@ -2538,18 +2870,71 @@ function toggleTheme() {
 }
 initTheme();
 
+// ── MINI CALCULATOR WIDGET ──
+let miniCalcExpr = '';
+let miniCalcJustEval = false;
+function toggleCalcWidget() {
+  const w = document.getElementById('miniCalcWidget');
+  w.classList.toggle('show');
+  const btn = document.getElementById('navCalc');
+  btn.classList.toggle('active', w.classList.contains('show'));
+}
+function miniCalcAction(val) {
+  const exprEl = document.getElementById('miniCalcExpr');
+  const resEl = document.getElementById('miniCalcResult');
+  if (val === 'AC') { miniCalcExpr = ''; exprEl.textContent = ''; resEl.textContent = '0'; miniCalcJustEval = false; return; }
+  if (val === '=') {
+    try {
+      const result = Function('"use strict"; return (' + miniCalcExpr.replace(/÷/g,'/').replace(/×/g,'*') + ')')();
+      exprEl.textContent = miniCalcExpr + ' =';
+      const r = parseFloat(result.toFixed(10));
+      resEl.textContent = isNaN(r) ? 'Error' : r;
+      miniCalcExpr = String(isNaN(r) ? '' : r);
+      miniCalcJustEval = true;
+    } catch { resEl.textContent = 'Error'; miniCalcExpr = ''; miniCalcJustEval = false; }
+    return;
+  }
+  if (val === '%') {
+    try { const r = parseFloat((Function('"use strict"; return (' + miniCalcExpr + ')')() / 100).toFixed(10)); miniCalcExpr = String(r); resEl.textContent = r; exprEl.textContent = ''; } catch {}
+    return;
+  }
+  const isOp = ['+','-','*','/'].includes(val);
+  if (miniCalcJustEval && !isOp) { miniCalcExpr = ''; exprEl.textContent = ''; miniCalcJustEval = false; }
+  else if (miniCalcJustEval && isOp) { miniCalcJustEval = false; }
+  miniCalcExpr += val;
+  try { const r = Function('"use strict"; return (' + miniCalcExpr + ')')(); resEl.textContent = parseFloat(r.toFixed(10)); } catch {}
+  exprEl.textContent = miniCalcExpr;
+}
+// Close mini calc when clicking outside
+document.addEventListener('click', (e) => {
+  const w = document.getElementById('miniCalcWidget');
+  if (!w) return;
+  if (w.classList.contains('show') && !w.contains(e.target) && !document.getElementById('navCalc').contains(e.target)) {
+    w.classList.remove('show');
+    document.getElementById('navCalc').classList.remove('active');
+  }
+});
+
 // ── WELCOME ──
 function setWelcomeGreeting() {
-  const h = new Date().getHours();
-  const pools = {
-    morning: ['Good morning.', 'Morning! Ready to dive in?', 'Rise and shine.'],
-    afternoon: ['Good afternoon.', 'Hello there.', 'Afternoon.'],
-    evening: ['Good evening.', 'Evening! How can I help?', 'Hi there.'],
-    night: ['Working late?', 'Burning the midnight oil.', 'Hello, night owl.'],
-  };
-  const pool = h >= 5 && h < 12 ? pools.morning : h >= 12 && h < 17 ? pools.afternoon : h >= 17 && h < 21 ? pools.evening : pools.night;
+  const name = profile.name && profile.name !== 'User' ? profile.name.split(' ')[0] : null;
+  const greetings = name
+    ? [
+        `Hi there, ${name}! 👋`,
+        `${name} is back!`,
+        `Welcome back, ${name}.`,
+        `Hey ${name}, what's on your mind?`,
+        `Good to see you, ${name}.`,
+      ]
+    : [
+        'Hi there! 👋',
+        'What can I help with?',
+        'Ask me anything.',
+        'Ready when you are.',
+        'Hello! Let\'s get into it.',
+      ];
   const el = document.getElementById('welcomeGreeting');
-  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+  if (el) el.textContent = greetings[Math.floor(Math.random() * greetings.length)];
 }
 setWelcomeGreeting();
 
@@ -2557,19 +2942,18 @@ setWelcomeGreeting();
 function setupSidebarHover() {
   const sidebar = document.getElementById('sidebar');
   const trigger = document.getElementById('sidebarTrigger');
-
-  sidebar.addEventListener('mouseleave', () => {
+  const dropdown = document.getElementById('profileDropdown');
+  sidebar.addEventListener('mouseleave', (e) => {
     if (isMobile()) return;
+    if (dropdown.matches(':hover') || dropdown.contains(e.relatedTarget)) return;
     miniSidebar();
   });
-  sidebar.addEventListener('mouseenter', () => {
+  dropdown.addEventListener('mouseleave', (e) => {
     if (isMobile()) return;
-    expandSidebar();
+    if (!sidebar.contains(e.relatedTarget)) miniSidebar();
   });
-  trigger.addEventListener('mouseenter', () => {
-    if (isMobile()) return;
-    expandSidebar();
-  });
+  sidebar.addEventListener('mouseenter', () => { if (isMobile()) return; expandSidebar(); });
+  trigger.addEventListener('mouseenter', () => { if (isMobile()) return; expandSidebar(); });
 }
 function expandSidebar() {
   sidebarMini = false;
@@ -2578,6 +2962,8 @@ function expandSidebar() {
   document.getElementById('profileDropdown').classList.remove('show');
 }
 function miniSidebar() {
+  const dropdown = document.getElementById('profileDropdown');
+  if (dropdown.classList.contains('show') && dropdown.matches(':hover')) return;
   sidebarMini = true;
   document.getElementById('sidebar').classList.add('mini');
   if (!isMobile()) document.getElementById('mainArea').classList.add('sidebar-mini');
@@ -2596,13 +2982,18 @@ setupSidebarHover();
 // ── VIEWS ──
 function showView(view) {
   currentView = view;
-  document.getElementById('chatView').style.display = view === 'chat' ? 'flex' : 'none';
-  document.getElementById('settingsView').classList.toggle('show', view === 'settings');
-  document.getElementById('notesView').classList.toggle('show', view === 'notes');
-  document.getElementById('navChat').classList.toggle('active', view === 'chat');
-  document.getElementById('navSettings').classList.toggle('active', view === 'settings');
-  document.getElementById('navNotes').classList.toggle('active', view === 'notes');
+  const views = ['chat','settings','notes','code','calc','history'];
+  views.forEach(v => {
+    const el = document.getElementById(v === 'chat' ? 'chatView' : v === 'settings' ? 'settingsView' : v === 'notes' ? 'notesView' : v === 'code' ? 'codeView' : v === 'calc' ? 'calcView' : 'historyView');
+    if (!el) return;
+    if (v === 'chat') el.style.display = view === 'chat' ? 'flex' : 'none';
+    else el.classList.toggle('show', view === v);
+  });
+  const navMap = { chat: 'navChat', settings: 'navSettings', notes: 'navNotes', code: 'navCode', calc: 'navCalc', history: 'navHistory' };
+  Object.entries(navMap).forEach(([v, id]) => { const el = document.getElementById(id); if (el) el.classList.toggle('active', view === v); });
   if (view === 'notes') renderNotesList();
+  if (view === 'history') renderHistoryList();
+  if (view === 'settings') calcStorageUsage();
   if (isMobile()) hideSidebar();
 }
 
@@ -2612,16 +3003,13 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   document.getElementById('sendBtn').disabled = el.value.trim() === '';
 }
-
 function autoResizeDm(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
-
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function handleChatPaste(e) {
   const items = e.clipboardData?.items;
   if (!items) return;
@@ -2637,7 +3025,6 @@ function handleChatPaste(e) {
     }
   }
 }
-
 function handleDmPaste(e, mode) {
   const items = e.clipboardData?.items;
   if (!items) return;
@@ -2647,29 +3034,24 @@ function handleDmPaste(e, mode) {
       const file = item.getAsFile();
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = ev => {
-        cancelReply(mode);
-        stageDmMediaFromDataUrl(ev.target.result, false, mode);
-      };
+      reader.onload = ev => { cancelReply(mode); stageDmMediaFromDataUrl(ev.target.result, false, mode); };
       reader.readAsDataURL(file);
       return;
     }
   }
 }
-
 function fillSuggestion(text) {
   const i = document.getElementById('userInput');
   i.value = text; autoResize(i); i.focus();
 }
 
 function newChat() {
-  chatHistory = [];
-  clearAIStaging();
+  chatHistory = []; clearAIStaging();
   const msgs = document.getElementById('messages');
   msgs.innerHTML = '';
   const w = document.createElement('div');
   w.className = 'welcome'; w.id = 'welcomeScreen';
-  w.innerHTML = `<div class="welcome-greeting" id="welcomeGreeting">Good day.</div>
+  w.innerHTML = `<div class="welcome-greeting" id="welcomeGreeting">Ask me anything.</div>
     <p class="welcome-sub">Ask me anything — calculations, facts, explanations, code.</p>
     <div class="suggestions">
       <div class="sug-card" onclick="fillSuggestion('Solve: integrate x² from 0 to 3')"><div class="sug-title">Math & Calculus</div><div class="sug-sub">Solve integrals, equations</div></div>
@@ -2709,7 +3091,11 @@ async function sendMessage() {
   const typingEl = appendTyping();
   isTyping = true;
   try {
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: chatHistory }) });
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chatHistory })
+    });
     const data = await res.json();
     removeTyping(typingEl);
     if (data.error) throw new Error(data.error);
@@ -2729,8 +3115,10 @@ function appendMediaMessage(role, dataUrl, isVideo, caption) {
   mediaDiv.className = `message ${role}`;
   const av1 = document.createElement('div');
   av1.className = `avatar ${role === 'ai' ? 'ai' : 'user-av'}`;
-  if (role !== 'ai' && profile.avatarUrl) { av1.innerHTML = `<img src="${profile.avatarUrl}" alt="">`; }
-  else { av1.textContent = role === 'ai' ? 'AI' : getInitial(profile.name); }
+  if (role !== 'ai') {
+    if (profile.avatarUrl) { av1.innerHTML = `<img src="${profile.avatarUrl}" alt="">`; }
+    else { av1.classList.add('default-avatar'); av1.innerHTML = DEFAULT_AVATAR_SVG; }
+  } else { av1.textContent = 'AI'; }
   const mediaBubble = document.createElement('div');
   mediaBubble.className = 'bubble media-only';
   if (isVideo) {
@@ -2764,8 +3152,10 @@ function appendMessage(role, text) {
   div.className = `message ${role}`;
   const av = document.createElement('div');
   av.className = `avatar ${role === 'ai' ? 'ai' : 'user-av'}`;
-  if (role !== 'ai' && profile.avatarUrl) { av.innerHTML = `<img src="${profile.avatarUrl}" alt="">`; }
-  else { av.textContent = role === 'ai' ? 'AI' : getInitial(profile.name); }
+  if (role !== 'ai') {
+    if (profile.avatarUrl) { av.innerHTML = `<img src="${profile.avatarUrl}" alt="">`; }
+    else { av.classList.add('default-avatar'); av.innerHTML = DEFAULT_AVATAR_SVG; }
+  } else { av.textContent = 'AI'; }
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.innerHTML = formatText(text);
@@ -2813,9 +3203,7 @@ function stageAIMediaFromDataUrl(dataUrl, isVideo) {
     ? `<video src="${dataUrl}" style="width:90px;height:74px;object-fit:cover;border-radius:8px;"></video>`
     : `<img src="${dataUrl}" style="width:90px;height:74px;object-fit:cover;border-radius:8px;">`;
   const removeBtn = document.createElement('button');
-  removeBtn.className = 'media-staging-remove';
-  removeBtn.textContent = '×';
-  removeBtn.onclick = clearAIStaging;
+  removeBtn.className = 'media-staging-remove'; removeBtn.textContent = '×'; removeBtn.onclick = clearAIStaging;
   thumb.appendChild(removeBtn);
   wrap.classList.add('show');
   document.getElementById('mediaStagingCaption').value = '';
@@ -2840,32 +3228,67 @@ function sendStagedMedia() {
   clearAIStaging();
 }
 
-// ── ADMIN ──
+// ── ADMIN (HIGH SECURITY) ──
+// Session-only flag — never stored in localStorage
+let _adminSessionValid = false;
+
 function openAdminPopup() {
-  document.getElementById('adminOverlay').classList.add('show');
-  document.getElementById('adminInput').value = '';
-  document.getElementById('adminError').style.display = 'none';
-  setTimeout(() => document.getElementById('adminInput').focus(), 50);
+  // Always require password, even if previously authenticated this session
+  _adminSessionValid = false;
+  adminAuthenticated = false;
+  const overlay = document.getElementById('adminOverlay');
+  const input = document.getElementById('adminInput');
+  overlay.classList.add('show');
+  input.value = '';
+  // Ensure no browser autofill by temporarily changing type
+  input.setAttribute('type', 'text');
+  setTimeout(() => {
+    input.setAttribute('type', 'password');
+    document.getElementById('adminError').style.display = 'none';
+    input.focus();
+  }, 10);
 }
+
 function closeAdminPopup() {
-  document.getElementById('adminOverlay').classList.remove('show');
+  const overlay = document.getElementById('adminOverlay');
+  const input = document.getElementById('adminInput');
+  overlay.classList.remove('show');
+  // Wipe the field immediately
+  input.value = '';
+  input.blur();
+  document.getElementById('adminError').style.display = 'none';
+  // Reset auth state so re-opening always requires password
+  if (!_adminSessionValid) {
+    adminAuthenticated = false;
+  }
 }
+
 function adminKeyHandler(e) {
   if (e.key === 'Enter') verifyAdmin();
-  if (e.key === 'Escape') closeAdminPopup();
+  if (e.key === 'Escape') {
+    _adminSessionValid = false;
+    adminAuthenticated = false;
+    closeAdminPopup();
+  }
 }
+
 function verifyAdmin() {
   const val = document.getElementById('adminInput').value;
+  const err = document.getElementById('adminError');
   if (val === ADMIN_KEY) {
+    _adminSessionValid = true;
     adminAuthenticated = true;
+    document.getElementById('adminInput').value = '';
     closeAdminPopup();
     openDM();
   } else {
-    document.getElementById('adminError').style.display = 'block';
+    err.style.display = 'block';
     document.getElementById('adminInput').value = '';
     document.getElementById('adminInput').focus();
   }
 }
+
+// Close DM also resets admin state — handled inside closeDM above
 
 // ── DM ──
 function showDmListSkeleton() {
@@ -2882,7 +3305,6 @@ function showDmListSkeleton() {
 
 async function openDM() {
   dmOpen = true;
-
   if (isMobile()) {
     document.getElementById('dmFullscreen').classList.add('show');
     document.getElementById('dmFsListView').style.display = 'flex';
@@ -2891,12 +3313,8 @@ async function openDM() {
     document.getElementById('dmOverlay').classList.add('show');
     showDmEmptyState();
   }
-
   showDmListSkeleton();
-
-  // Join presence channel — user is now "online" in admin DM
   await joinPresence();
-
   try {
     await loadContacts();
     await preloadAllChats();
@@ -2908,22 +3326,13 @@ async function openDM() {
 async function closeDM() {
   dmOpen = false;
   adminAuthenticated = false;
-
-  // Leave presence — user goes offline
+  _adminSessionValid = false; // Always require password again after closing DM
   await leavePresence();
-
   activeDmId = null;
   document.getElementById('dmOverlay').classList.remove('show');
   document.getElementById('dmFullscreen').classList.remove('show');
-  closeMsgActionMenu();
-  hideRemoteTyping();
-  stopTypingBroadcast();
-  resetPresenceDots();
-
-  if (typingChannel) {
-    await supabaseClient.removeChannel(typingChannel);
-    typingChannel = null;
-  }
+  closeMsgActionMenu(); hideRemoteTyping(); stopTypingBroadcast(); resetPresenceDots();
+  if (typingChannel) { await supabaseClient.removeChannel(typingChannel); typingChannel = null; }
   await subscriptionManager.replaceSubscription(null);
 }
 
@@ -2932,7 +3341,6 @@ function dmOverlayClick(e) { if (e.target === document.getElementById('dmOverlay
 // ── BUILD DM CONV LIST ──
 function buildDMConvList() {
   const withSentMessages = dmContacts.filter(c => c.sentByMe === true);
-
   const sorted = [...withSentMessages].sort((a, b) => {
     const aUnread = a.unread && a.id !== activeDmId ? 1 : 0;
     const bUnread = b.unread && b.id !== activeDmId ? 1 : 0;
@@ -2948,8 +3356,7 @@ function buildDMConvList() {
 
     if (sorted.length === 0) {
       list.innerHTML = `<div style="padding:28px 16px;text-align:center;font-size:12.5px;color:var(--text3);line-height:1.7;">
-        No conversations yet.<br>
-        <span style="font-size:11.5px;opacity:0.7;">Search above to start chatting.</span>
+        No conversations yet.<br><span style="font-size:11.5px;opacity:0.7;">Search above to start chatting.</span>
       </div>`;
       return;
     }
@@ -2959,18 +3366,20 @@ function buildDMConvList() {
       item.className = 'dm-conv-item' + (c.id === activeDmId ? ' active' : '');
       item.dataset.id = c.id;
       item.onclick = () => { isFsList ? openFsChat(c.id) : openDesktopChat(c.id); };
-
       const lastMsg = c.lastMessage;
       const isUnread = c.unread && c.id !== activeDmId;
       const previewClass = 'dm-conv-preview' + (isUnread ? ' unread' : '');
-      const previewText = lastMsg
-        ? (lastMsg.type === 'sent' ? 'You: ' + lastMsg.text : lastMsg.text)
-        : '';
+      const previewText = lastMsg ? (lastMsg.type === 'sent' ? 'You: ' + lastMsg.text : lastMsg.text) : '';
 
-      // No online dot in conv list — presence only in chat header
+      // FIX 1: Conv list avatar using proper silhouette
+      const avatarInner = c.avatarUrl
+        ? `<img src="${c.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">`
+        : DEFAULT_AVATAR_SVG;
+      const avatarBg = c.avatarUrl ? 'transparent' : '#e8e8ec';
+
       item.innerHTML = `
-        <div class="dm-conv-avatar" style="background:${c.color};">
-          ${c.avatarUrl ? `<img src="${c.avatarUrl}" alt="">` : c.initials}
+        <div class="dm-conv-avatar default-avatar" style="background:${avatarBg};overflow:hidden;position:relative;">
+          ${avatarInner}
         </div>
         <div class="dm-conv-info">
           <div class="dm-conv-name">${escHtml(c.name)}</div>
@@ -2991,10 +3400,8 @@ async function loadContacts() {
   if (!user) return;
   const { data } = await supabaseClient.from('profiles').select('id, username, avatar_url');
   if (!data) return;
-
   const existingMap = new Map(dmContacts.map(c => [c.id, c]));
   dmContacts.length = 0;
-
   const colors = [
     'linear-gradient(135deg,#5b6af0,#a855f7)',
     'linear-gradient(135deg,#f97316,#ec4899)',
@@ -3008,12 +3415,8 @@ async function loadContacts() {
     if (u.id === user.id) return;
     const existing = existingMap.get(u.id);
     dmContacts.push({
-      id: u.id,
-      name: u.username || 'User',
-      initials: (u.username || 'U')[0].toUpperCase(),
-      avatarUrl: u.avatar_url || null,
-      color: colors[colorIdx % colors.length],
-      online: true,
+      id: u.id, name: u.username || 'User', initials: (u.username || 'U')[0].toUpperCase(),
+      avatarUrl: u.avatar_url || null, color: colors[colorIdx % colors.length], online: true,
       lastMessage: existing ? existing.lastMessage : null,
       lastMessageTs: existing ? existing.lastMessageTs : 0,
       unread: existing ? existing.unread : false,
@@ -3034,11 +3437,7 @@ function showSkeletonMessages(container) {
     const isSent = i % 2 === 0;
     const sk = document.createElement('div');
     sk.className = `dm-skeleton-msg${isSent ? ' sent' : ''}`;
-    if (!isSent) {
-      const av = document.createElement('div');
-      av.className = 'dm-skeleton-av';
-      sk.appendChild(av);
-    }
+    if (!isSent) { const av = document.createElement('div'); av.className = 'dm-skeleton-av'; sk.appendChild(av); }
     const bub = document.createElement('div');
     bub.className = 'dm-skeleton-bubble';
     bub.style.width = (60 + Math.random() * 80) + 'px';
@@ -3053,42 +3452,28 @@ async function openDesktopChat(id) {
   if (!contact) return;
   contact.unread = false;
   activeDmId = id;
-
-  document.querySelectorAll('#dmConvList .dm-conv-item').forEach(el =>
-    el.classList.toggle('active', el.dataset.id === id)
-  );
+  document.querySelectorAll('#dmConvList .dm-conv-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
   document.getElementById('dmTopbarName').textContent = contact.name;
   const av = document.getElementById('dmTopbarAvatar');
-  if (contact.avatarUrl) {
-    av.innerHTML = `<img src="${contact.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    av.style.background = 'transparent';
-  } else {
-    av.style.background = contact.color;
-    av.textContent = contact.initials;
-  }
+  // FIX 1: topbar avatar
+  setAvatarEl(av, contact.avatarUrl);
+  av.style.borderRadius = '50%';
 
-  // Update presence dot for this contact
   resetPresenceDots();
   updatePresenceDots();
-
   document.getElementById('dmEmptyState').style.display = 'none';
   document.getElementById('dmActiveChatWrap').style.display = 'flex';
   const msgsEl = document.getElementById('dmChatMessages');
   showSkeletonMessages(msgsEl);
-
-  // Setup typing channel
   const { data: { user } } = await supabaseClient.auth.getUser();
-  if (user) { await setupTypingChannel(user.id, id); }
-
+  if (user) await setupTypingChannel(user.id, id);
   loadMessages(id);
   cancelReply();
   clearDmStaging();
   document.getElementById('dmInput').focus();
 }
 
-function formatMsgTime(date) {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+function formatMsgTime(date) { return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function formatTimeSeparator(date) {
   const now = new Date();
   const diff = now - date;
@@ -3106,10 +3491,7 @@ function groupMessages(messages) {
     const d = new Date(msg.created_at || msg.ts || Date.now());
     const minuteKey = `${msg.sender_id}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}_${d.getHours()}_${d.getMinutes()}`;
     const dayLabel = formatTimeSeparator(d);
-    if (dayLabel !== lastDayLabel) {
-      groups.push({ type: 'separator', label: dayLabel });
-      lastDayLabel = dayLabel;
-    }
+    if (dayLabel !== lastDayLabel) { groups.push({ type: 'separator', label: dayLabel }); lastDayLabel = dayLabel; }
     if (currentGroup && currentGroup.minuteKey === minuteKey) {
       currentGroup.messages.push(msg);
     } else {
@@ -3120,6 +3502,26 @@ function groupMessages(messages) {
   return groups;
 }
 
+/* ────────────────────────────────────────────
+   FIX 1: helper to build avatar element
+   used inside renderGroupedMessages
+──────────────────────────────────────────── */
+function makeGroupAvatar(contact) {
+  const av = document.createElement('div');
+  av.className = 'dm-group-avatar';
+  av.style.background = contact && contact.avatarUrl ? 'transparent' : '#e8e8ec';
+  if (contact && contact.avatarUrl) {
+    const img = document.createElement('img');
+    img.src = contact.avatarUrl;
+    img.alt = '';
+    av.appendChild(img);
+  } else {
+    av.classList.add('default-avatar');
+    av.innerHTML = DEFAULT_AVATAR_SVG;
+  }
+  return av;
+}
+
 function renderGroupedMessages(container, groups, currentUserId, contact) {
   container.innerHTML = '';
   renderedMsgIds.clear();
@@ -3127,29 +3529,20 @@ function renderGroupedMessages(container, groups, currentUserId, contact) {
   groups.forEach(item => {
     if (item.type === 'separator') {
       const sep = document.createElement('div');
-      sep.className = 'dm-time-separator';
-      sep.textContent = item.label;
-      container.appendChild(sep);
-      return;
+      sep.className = 'dm-time-separator'; sep.textContent = item.label;
+      container.appendChild(sep); return;
     }
 
     const isSent = item.sender_id === currentUserId;
     const groupEl = document.createElement('div');
     groupEl.className = `dm-msg-group ${isSent ? 'sent' : 'received'}`;
-
+    groupEl.dataset.minuteKey = item.minuteKey;
+    groupEl.dataset.senderId = item.sender_id;
     const rowEl = document.createElement('div');
     rowEl.className = 'dm-msg-group-row';
 
     if (!isSent) {
-      const av = document.createElement('div');
-      av.className = 'dm-group-avatar';
-      if (contact && contact.avatarUrl) {
-        av.innerHTML = `<img src="${contact.avatarUrl}" alt="">`;
-      } else if (contact) {
-        av.style.background = contact.color;
-        av.textContent = contact.initials;
-      }
-      rowEl.appendChild(av);
+      rowEl.appendChild(makeGroupAvatar(contact));
     }
 
     const bubblesWrap = document.createElement('div');
@@ -3157,93 +3550,92 @@ function renderGroupedMessages(container, groups, currentUserId, contact) {
 
     item.messages.forEach((msg) => {
       if (msg.id) renderedMsgIds.add(msg.id);
-      const bWrap = document.createElement('div');
-      bWrap.className = 'dm-bubble-wrap';
-      bWrap.dataset.msgId = msg.id || '';
-      bWrap.dataset.text = msg.content || msg.text || '';
-      bWrap.dataset.sender = isSent ? 'You' : (contact ? contact.name : 'User');
-
-      const msgText = msg.content || msg.text || '';
-      const msgSender = isSent ? 'You' : (contact ? contact.name : 'User');
-
-      const replyBtn = document.createElement('button');
-      replyBtn.className = 'dm-reply-btn';
-      replyBtn.title = 'Reply';
-      replyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
-      replyBtn.onclick = (e) => { e.stopPropagation(); startReply(msgText, msgSender); };
-
-      const moreBtn = document.createElement('button');
-      moreBtn.className = 'dm-more-btn';
-      moreBtn.title = 'More options';
-      moreBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>`;
-      moreBtn.onclick = (e) => {
-        e.stopPropagation();
-        showMsgActionMenu(e, bWrap, msg, isSent);
-      };
-
-      const bubble = document.createElement('div');
-      bubble.className = 'dm-bubble' + (msg.sending ? ' sending' : '');
-      bubble.dataset.msgId = msg.id || '';
-
-      if (msg.reply_to_text) {
-        const rp = document.createElement('div');
-        rp.className = 'dm-reply-preview';
-        rp.innerHTML = `<div class="dm-reply-author">${escHtml(msg.reply_to_author || '')}</div><div class="dm-reply-text">${escHtml(msg.reply_to_text)}</div>`;
-        bubble.prepend(rp);
-      }
-
-      if (msg.media_url) {
-        if (msg.is_video) {
-          bubble.innerHTML += `<video controls src="${msg.media_url}" style="max-width:220px;border-radius:10px;"></video>`;
-        } else {
-          bubble.innerHTML += `<img src="${msg.media_url}" style="max-width:220px;border-radius:10px;">`;
-        }
-      }
-
-      if (msg.content) {
-        const textNode = document.createElement('div');
-        textNode.textContent = msg.content;
-        bubble.appendChild(textNode);
-      }
-
-      if (msg.sending) {
-        const spin = document.createElement('span');
-        spin.className = 'dm-sending-icon';
-        spin.innerHTML = `<div class="dm-sending-spinner"></div>`;
-        bubble.appendChild(spin);
-      }
-
-      bubble.addEventListener('dblclick', (e) => { e.preventDefault(); addReaction(bWrap, '❤️'); });
-      bubble.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
-      });
-
-      if (isSent) {
-        bWrap.appendChild(moreBtn);
-        bWrap.appendChild(replyBtn);
-        bWrap.appendChild(bubble);
-      } else {
-        bWrap.appendChild(bubble);
-        bWrap.appendChild(replyBtn);
-        bWrap.appendChild(moreBtn);
-      }
-
-      bubblesWrap.appendChild(bWrap);
+      bubblesWrap.appendChild(makeBubbleWrap(msg, isSent, contact, currentUserId));
     });
 
     rowEl.appendChild(bubblesWrap);
     groupEl.appendChild(rowEl);
-
     const timeEl = document.createElement('div');
-    timeEl.className = 'dm-group-time';
-    timeEl.textContent = item.time;
+    timeEl.className = 'dm-group-time'; timeEl.textContent = item.time;
     groupEl.appendChild(timeEl);
-
     container.appendChild(groupEl);
   });
 
   container.scrollTop = container.scrollHeight;
+}
+
+/* Shared bubble-wrap builder */
+function makeBubbleWrap(msg, isSent, contact, currentUserId) {
+  const bWrap = document.createElement('div');
+  bWrap.className = 'dm-bubble-wrap';
+  bWrap.dataset.msgId = msg.id || '';
+  bWrap.dataset.text = msg.content || msg.text || '';
+  bWrap.dataset.sender = isSent ? 'You' : (contact ? contact.name : 'User');
+
+  const msgText = msg.content || msg.text || '';
+  const msgSender = isSent ? 'You' : (contact ? contact.name : 'User');
+
+  const replyBtn = document.createElement('button');
+  replyBtn.className = 'dm-reply-btn'; replyBtn.title = 'Reply';
+  replyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
+  replyBtn.onclick = (e) => { e.stopPropagation(); startReply(msgText, msgSender); };
+
+  const moreBtn = document.createElement('button');
+  moreBtn.className = 'dm-more-btn'; moreBtn.title = 'More options';
+  moreBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>`;
+  moreBtn.onclick = (e) => { e.stopPropagation(); showMsgActionMenu(e, bWrap, msg, isSent); };
+
+  const bubble = document.createElement('div');
+  bubble.className = 'dm-bubble' + (msg.sending ? ' sending' : '');
+  bubble.dataset.msgId = msg.id || '';
+
+  if (msg.reply_to_text) {
+    const rp = document.createElement('div');
+    rp.className = 'dm-reply-preview';
+    rp.innerHTML = `<div class="dm-reply-author">${escHtml(msg.reply_to_author || '')}</div><div class="dm-reply-text">${escHtml(msg.reply_to_text)}</div>`;
+    bubble.prepend(rp);
+  }
+
+  if (msg.media_url && !msg.content) {
+    bubble.className = 'dm-bubble dm-bubble-media-only' + (msg.sending ? ' sending' : '');
+    if (msg.is_video) {
+      bubble.innerHTML = `<video controls src="${msg.media_url}" style="max-width:220px;border-radius:10px;"></video>`;
+    } else {
+      bubble.innerHTML = `<img src="${msg.media_url}" style="max-width:220px;border-radius:10px;cursor:pointer;" onclick="openLightbox(this.src)">`;
+    }
+  } else if (msg.media_url && msg.content) {
+    if (msg.is_video) {
+      bubble.innerHTML += `<video controls src="${msg.media_url}" style="max-width:220px;border-radius:10px;margin-bottom:6px;display:block;"></video>`;
+    } else {
+      bubble.innerHTML += `<img src="${msg.media_url}" style="max-width:220px;border-radius:10px;margin-bottom:6px;display:block;cursor:pointer;" onclick="openLightbox(this.src)">`;
+    }
+    if (msg.content) {
+      const textNode = document.createElement('div');
+      textNode.textContent = msg.content;
+      bubble.appendChild(textNode);
+    }
+  } else if (msg.content) {
+    const textNode = document.createElement('div');
+    textNode.textContent = msg.content;
+    bubble.appendChild(textNode);
+  }
+
+  if (msg.sending) {
+    const spin = document.createElement('span');
+    spin.className = 'dm-sending-icon';
+    spin.innerHTML = `<div class="dm-sending-spinner"></div>`;
+    bubble.appendChild(spin);
+  }
+
+  bubble.addEventListener('dblclick', (e) => { e.preventDefault(); addReaction(bWrap, '❤️'); });
+  bubble.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
+  });
+
+  if (isSent) { bWrap.appendChild(moreBtn); bWrap.appendChild(replyBtn); bWrap.appendChild(bubble); }
+  else { bWrap.appendChild(bubble); bWrap.appendChild(replyBtn); bWrap.appendChild(moreBtn); }
+
+  return bWrap;
 }
 
 function addReaction(bWrap, emoji) {
@@ -3254,21 +3646,15 @@ function addReaction(bWrap, emoji) {
     return;
   }
   const reaction = document.createElement('div');
-  reaction.className = 'dm-reaction';
-  reaction.dataset.emoji = emoji;
-  reaction.textContent = emoji;
+  reaction.className = 'dm-reaction'; reaction.dataset.emoji = emoji; reaction.textContent = emoji;
   reaction.onclick = () => addReaction(bWrap, emoji);
   bWrap.appendChild(reaction);
 }
 
 function showCtxMenu(x, y, bWrap, msg, isSent, contact) {
   const menu = document.getElementById('dmCtxMenu');
-  menu.innerHTML = '';
-  menu.style.display = 'block';
-  menu.style.left = x + 'px';
-  menu.style.top = y + 'px';
-  const text = bWrap.dataset.text;
-  const sender = bWrap.dataset.sender;
+  menu.innerHTML = ''; menu.style.display = 'block'; menu.style.left = x + 'px'; menu.style.top = y + 'px';
+  const text = bWrap.dataset.text; const sender = bWrap.dataset.sender;
 
   const replyBtn = document.createElement('button');
   replyBtn.className = 'dm-ctx-item';
@@ -3276,8 +3662,7 @@ function showCtxMenu(x, y, bWrap, msg, isSent, contact) {
   replyBtn.onclick = () => { startReply(text, sender); closeCtxMenu(); };
 
   const reactBtn = document.createElement('button');
-  reactBtn.className = 'dm-ctx-item';
-  reactBtn.innerHTML = `❤️ React`;
+  reactBtn.className = 'dm-ctx-item'; reactBtn.innerHTML = `❤️ React`;
   reactBtn.onclick = () => { addReaction(bWrap, '❤️'); closeCtxMenu(); };
 
   const copyBtn = document.createElement('button');
@@ -3288,18 +3673,9 @@ function showCtxMenu(x, y, bWrap, msg, isSent, contact) {
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'dm-ctx-item danger';
   deleteBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Delete message`;
-  deleteBtn.onclick = () => {
-    closeCtxMenu();
-    showConfirm('Delete message?', 'This message will be removed from your view.', 'Delete', () => {
-      deleteMessage(msg, bWrap);
-    });
-  };
+  deleteBtn.onclick = () => { closeCtxMenu(); showConfirm('Delete message?', 'This message will be removed from your view.', 'Delete', () => { deleteMessage(msg, bWrap); }); };
 
-  menu.appendChild(replyBtn);
-  menu.appendChild(reactBtn);
-  menu.appendChild(copyBtn);
-  menu.appendChild(deleteBtn);
-
+  menu.appendChild(replyBtn); menu.appendChild(reactBtn); menu.appendChild(copyBtn); menu.appendChild(deleteBtn);
   if (x + 160 > window.innerWidth) menu.style.left = (x - 160) + 'px';
   if (y + 100 > window.innerHeight) menu.style.top = (y - 100) + 'px';
 }
@@ -3307,12 +3683,8 @@ function showCtxMenu(x, y, bWrap, msg, isSent, contact) {
 function deleteMessage(msg, bWrap) {
   const parentGroup = bWrap.closest('.dm-msg-group');
   bWrap.remove();
-  if (parentGroup && parentGroup.querySelectorAll('.dm-bubble-wrap').length === 0) {
-    parentGroup.remove();
-  }
-  if (msg && msg.id) {
-    supabaseClient.from('messages').delete().eq('id', msg.id).then(() => {});
-  }
+  if (parentGroup && parentGroup.querySelectorAll('.dm-bubble-wrap').length === 0) parentGroup.remove();
+  if (msg && msg.id) supabaseClient.from('messages').delete().eq('id', msg.id).then(() => {});
 }
 
 function closeCtxMenu() { document.getElementById('dmCtxMenu').style.display = 'none'; }
@@ -3320,22 +3692,11 @@ document.addEventListener('click', () => closeCtxMenu());
 
 function startReply(text, author) {
   replyingTo = { text, author };
-  clearDmStaging();
-  clearDmFsStaging();
-
+  clearDmStaging(); clearDmFsStaging();
   const bar = document.getElementById('dmReplyBar');
-  if (bar) {
-    bar.classList.add('show');
-    document.getElementById('dmReplyBarAuthor').textContent = author;
-    document.getElementById('dmReplyBarText').textContent = text;
-  }
+  if (bar) { bar.classList.add('show'); document.getElementById('dmReplyBarAuthor').textContent = author; document.getElementById('dmReplyBarText').textContent = text; }
   const fsBar = document.getElementById('dmFsReplyBar');
-  if (fsBar) {
-    fsBar.classList.add('show');
-    document.getElementById('dmFsReplyBarAuthor').textContent = author;
-    document.getElementById('dmFsReplyBarText').textContent = text;
-  }
-
+  if (fsBar) { fsBar.classList.add('show'); document.getElementById('dmFsReplyBarAuthor').textContent = author; document.getElementById('dmFsReplyBarText').textContent = text; }
   const inputEl = isMobile() ? document.getElementById('dmFsInput') : document.getElementById('dmInput');
   if (inputEl) inputEl.focus();
 }
@@ -3357,8 +3718,7 @@ async function loadMessages(userId) {
   const contact = dmContacts.find(c => c.id === userId);
 
   try {
-    const { data, error } = await supabaseClient
-      .from('messages').select('*')
+    const { data, error } = await supabaseClient.from('messages').select('*')
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
       .order('created_at', { ascending: true });
     if (error) return;
@@ -3368,39 +3728,31 @@ async function loadMessages(userId) {
       renderGroupedMessages(msgsEl, groups, user.id, contact);
       const last = data[data.length - 1];
       updateContactLastMsg(userId, last, user.id);
-    } else {
-      msgsEl.innerHTML = '';
-    }
+    } else { msgsEl.innerHTML = ''; }
   } catch (err) { msgsEl.innerHTML = ''; }
 
   try {
-    const channel = supabaseClient
-      .channel(`messages:${user.id}:${userId}`)
+    const channel = supabaseClient.channel(`messages:${user.id}:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const newMsg = payload.new;
-        const isForThis = (newMsg.sender_id === user.id && newMsg.receiver_id === userId) ||
-          (newMsg.sender_id === userId && newMsg.receiver_id === user.id);
+        const isForThis = (newMsg.sender_id === user.id && newMsg.receiver_id === userId) || (newMsg.sender_id === userId && newMsg.receiver_id === user.id);
         if (!isForThis) return;
         if (renderedMsgIds.has(newMsg.id)) return;
         renderedMsgIds.add(newMsg.id);
         if (activeDmId === userId) {
-          removeSendingBubble(msgsEl, newMsg.content);
-          reloadAndRenderMessages(userId, 'desktop');
+          // FIX 2: instead of full reload, smartly append into correct group
+          appendIncomingMessage(msgsEl, newMsg, user.id, contact);
           updateContactLastMsg(userId, newMsg, user.id);
           buildDMConvList();
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, async (payload) => {
         if (activeDmId !== userId) return;
-        const { data: remaining } = await supabaseClient
-          .from('messages')
-          .select('*')
+        const { data: remaining } = await supabaseClient.from('messages').select('*')
           .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
           .order('created_at', { ascending: true });
-
-        if (!remaining || remaining.length === 0) {
-          clearChatUI();
-        } else {
+        if (!remaining || remaining.length === 0) { clearChatUI(); }
+        else {
           remaining.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
           const groups = groupMessages(remaining.map(m => ({ ...m, ts: m.created_at })));
           renderGroupedMessages(msgsEl, groups, user.id, contact);
@@ -3410,7 +3762,6 @@ async function loadMessages(userId) {
         }
       })
       .subscribe();
-
     await subscriptionManager.replaceSubscription(channel);
   } catch (err) {}
 }
@@ -3426,8 +3777,7 @@ async function loadFsMessages(userId) {
   const contact = dmContacts.find(c => c.id === userId);
 
   try {
-    const { data, error } = await supabaseClient
-      .from('messages').select('*')
+    const { data, error } = await supabaseClient.from('messages').select('*')
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
       .order('created_at', { ascending: true });
     if (error) return;
@@ -3435,46 +3785,33 @@ async function loadFsMessages(userId) {
       data.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
       const groups = groupMessages(data.map(m => ({ ...m, ts: m.created_at })));
       renderGroupedMessages(msgsEl, groups, user.id, contact);
-    } else {
-      msgsEl.innerHTML = '';
-    }
+    } else { msgsEl.innerHTML = ''; }
   } catch (err) { msgsEl.innerHTML = ''; }
 
   try {
-    const channel = supabaseClient
-      .channel(`fs-messages:${user.id}:${userId}`)
+    const channel = supabaseClient.channel(`fs-messages:${user.id}:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const newMsg = payload.new;
-        const isForThis = (newMsg.sender_id === user.id && newMsg.receiver_id === userId) ||
-          (newMsg.sender_id === userId && newMsg.receiver_id === user.id);
+        const isForThis = (newMsg.sender_id === user.id && newMsg.receiver_id === userId) || (newMsg.sender_id === userId && newMsg.receiver_id === user.id);
         if (!isForThis) return;
         if (renderedMsgIds.has(newMsg.id)) return;
         renderedMsgIds.add(newMsg.id);
         if (activeDmId === userId) {
-          removeSendingBubble(document.getElementById('dmFsMessages'), newMsg.content);
-          reloadAndRenderMessages(userId, 'mobile');
+          appendIncomingMessage(msgsEl, newMsg, user.id, contact);
           updateContactLastMsg(userId, newMsg, user.id);
           buildDMConvList();
         } else {
           const c = dmContacts.find(c => c.id === userId);
-          if (c) {
-            c.unread = true;
-            updateContactLastMsg(userId, newMsg, user.id);
-            buildDMConvList();
-          }
+          if (c) { c.unread = true; updateContactLastMsg(userId, newMsg, user.id); buildDMConvList(); }
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, async (payload) => {
         if (activeDmId !== userId) return;
-        const { data: remaining } = await supabaseClient
-          .from('messages')
-          .select('*')
+        const { data: remaining } = await supabaseClient.from('messages').select('*')
           .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
           .order('created_at', { ascending: true });
-
-        if (!remaining || remaining.length === 0) {
-          clearChatUI();
-        } else {
+        if (!remaining || remaining.length === 0) { clearChatUI(); }
+        else {
           remaining.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
           const groups = groupMessages(remaining.map(m => ({ ...m, ts: m.created_at })));
           renderGroupedMessages(msgsEl, groups, user.id, contact);
@@ -3484,54 +3821,125 @@ async function loadFsMessages(userId) {
         }
       })
       .subscribe();
-
     await subscriptionManager.replaceSubscription(channel);
   } catch (err) {}
 }
 
-function removeSendingBubble(container, text) {
-  if (!container) return;
-  container.querySelectorAll('.dm-bubble.sending').forEach(b => {
-    if (b.textContent === text) {
-      const wrap = b.closest('.dm-bubble-wrap');
-      if (wrap) wrap.remove();
-    }
-  });
-}
+/* ────────────────────────────────────────────
+   FIX 2: Smart append — checks last group in
+   the DOM and merges into it if same sender
+   and same minute. Otherwise creates new group.
+   Also removes matching optimistic bubble first.
+──────────────────────────────────────────── */
+function appendIncomingMessage(container, msg, currentUserId, contact) {
+  const isSent = msg.sender_id === currentUserId;
+  const d = new Date(msg.created_at || Date.now());
+  const minuteKey = `${msg.sender_id}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}_${d.getHours()}_${d.getMinutes()}`;
 
-async function reloadAndRenderMessages(userId, mode) {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) return;
-  const msgsEl = document.getElementById(mode === 'mobile' ? 'dmFsMessages' : 'dmChatMessages');
-  if (!msgsEl) return;
-  const contact = dmContacts.find(c => c.id === userId);
-  const { data } = await supabaseClient
-    .from('messages').select('*')
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
-    .order('created_at', { ascending: true });
-  if (data) {
-    data.forEach(m => { if (m.id) renderedMsgIds.add(m.id); });
-    const groups = groupMessages(data.map(m => ({ ...m, ts: m.created_at })));
-    renderGroupedMessages(msgsEl, groups, user.id, contact);
+  // Remove matching optimistic bubble (sent messages already shown optimistically)
+  if (isSent) {
+    const msgText = msg.content || '';
+    container.querySelectorAll('.dm-bubble.sending').forEach(b => {
+      // match by text content (strip reply preview text)
+      const clone = b.cloneNode(true);
+      clone.querySelectorAll('.dm-reply-preview, .dm-sending-icon').forEach(el => el.remove());
+      if (clone.textContent.trim() === msgText.trim()) {
+        const wrap = b.closest('.dm-bubble-wrap');
+        if (wrap) {
+          // upgrade it: remove sending state, set real id
+          b.classList.remove('sending');
+          b.style.opacity = '';
+          const spinner = b.querySelector('.dm-sending-icon');
+          if (spinner) spinner.remove();
+          b.dataset.msgId = msg.id;
+          wrap.dataset.msgId = msg.id;
+          // Fix the moreBtn to have the real msg
+          const moreBtn = wrap.querySelector('.dm-more-btn');
+          if (moreBtn) {
+            moreBtn.onclick = (e) => { e.stopPropagation(); showMsgActionMenu(e, wrap, msg, true); };
+          }
+          // Try merging its group into the right minuteKey group
+          const parentGroup = wrap.closest('.dm-msg-group');
+          if (parentGroup) {
+            parentGroup.dataset.minuteKey = minuteKey;
+          }
+          container.scrollTop = container.scrollHeight;
+          return;
+        }
+      }
+    });
+    // Check if we already upgraded it (no more sending bubbles with this text)
+    const stillPending = [...container.querySelectorAll('.dm-bubble.sending')].some(b => {
+      const clone = b.cloneNode(true);
+      clone.querySelectorAll('.dm-reply-preview, .dm-sending-icon').forEach(el => el.remove());
+      return clone.textContent.trim() === (msg.content || '').trim();
+    });
+    if (!stillPending) {
+      // Was upgraded in place
+      container.scrollTop = container.scrollHeight;
+      return;
+    }
   }
+
+  // Check last group in container
+  const allGroups = container.querySelectorAll('.dm-msg-group');
+  const lastGroup = allGroups[allGroups.length - 1];
+
+  if (lastGroup && lastGroup.dataset.minuteKey === minuteKey && lastGroup.dataset.senderId === msg.sender_id) {
+    // Append bubble into existing group
+    const bubblesWrap = lastGroup.querySelector('.dm-msg-bubbles');
+    if (bubblesWrap) {
+      bubblesWrap.appendChild(makeBubbleWrap(msg, isSent, contact, currentUserId));
+      // Update time label
+      const timeEl = lastGroup.querySelector('.dm-group-time');
+      if (timeEl) timeEl.textContent = formatMsgTime(d);
+      container.scrollTop = container.scrollHeight;
+      return;
+    }
+  }
+
+  // Create a new group
+  const groupEl = document.createElement('div');
+  groupEl.className = `dm-msg-group ${isSent ? 'sent' : 'received'}`;
+  groupEl.dataset.minuteKey = minuteKey;
+  groupEl.dataset.senderId = msg.sender_id;
+  groupEl.style.animation = 'msgIn 0.15s ease';
+
+  const rowEl = document.createElement('div');
+  rowEl.className = 'dm-msg-group-row';
+
+  if (!isSent) {
+    rowEl.appendChild(makeGroupAvatar(contact));
+  }
+
+  const bubblesWrap = document.createElement('div');
+  bubblesWrap.className = 'dm-msg-bubbles';
+  bubblesWrap.appendChild(makeBubbleWrap(msg, isSent, contact, currentUserId));
+
+  rowEl.appendChild(bubblesWrap);
+  groupEl.appendChild(rowEl);
+  const timeEl = document.createElement('div');
+  timeEl.className = 'dm-group-time'; timeEl.textContent = formatMsgTime(d);
+  groupEl.appendChild(timeEl);
+
+  // Insert before typing indicator if present
+  const typingEl = document.getElementById('dmTypingDots') || document.getElementById('dmFsTypingDots');
+  if (typingEl && typingEl.parentNode === container) {
+    container.insertBefore(groupEl, typingEl);
+  } else {
+    container.appendChild(groupEl);
+  }
+  container.scrollTop = container.scrollHeight;
 }
 
 function updateContactLastMsg(userId, msg, currentUserId) {
   const contact = dmContacts.find(c => c.id === userId);
   if (!contact) return;
   const d = new Date(msg.created_at);
-  contact.lastMessage = {
-    type: msg.sender_id === currentUserId ? 'sent' : 'received',
-    text: msg.content,
-    time: formatMsgTime(d)
-  };
+  contact.lastMessage = { type: msg.sender_id === currentUserId ? 'sent' : 'received', text: msg.content, time: formatMsgTime(d) };
   contact.lastMessageTs = d.getTime();
-  if (msg.sender_id === currentUserId) {
-    contact.sentByMe = true;
-  }
-  if (msg.sender_id !== currentUserId && activeDmId !== userId) {
-    contact.unread = true;
-  }
+  if (msg.sender_id === currentUserId) contact.sentByMe = true;
+  if (msg.sender_id !== currentUserId && activeDmId !== userId) contact.unread = true;
   buildDMConvList();
 }
 
@@ -3539,26 +3947,21 @@ function updateContactLastMsg(userId, msg, currentUserId) {
 async function openFsChat(id) {
   const contact = dmContacts.find(c => c.id === id);
   if (!contact) return;
-  contact.unread = false;
-  activeDmId = id;
+  contact.unread = false; activeDmId = id;
+
+  // FIX 1: fs avatar
   const av = document.getElementById('dmFsAvatar');
-  if (contact.avatarUrl) { av.innerHTML = `<img src="${contact.avatarUrl}" alt="">`; av.style.background = 'transparent'; }
-  else { av.style.background = contact.color; av.textContent = contact.initials; }
+  setAvatarEl(av, contact.avatarUrl);
+  av.style.borderRadius = '50%';
+
   document.getElementById('dmFsName').textContent = contact.name;
-
-  // Update presence dot for mobile
-  resetPresenceDots();
-  updatePresenceDots();
-
+  resetPresenceDots(); updatePresenceDots();
   const msgsEl = document.getElementById('dmFsMessages');
   showSkeletonMessages(msgsEl);
-
   const { data: { user } } = await supabaseClient.auth.getUser();
-  if (user) { await setupTypingChannel(user.id, id); }
-
+  if (user) await setupTypingChannel(user.id, id);
   loadFsMessages(id);
-  cancelReply('mobile');
-  clearDmFsStaging();
+  cancelReply('mobile'); clearDmFsStaging();
   document.getElementById('dmFsListView').style.display = 'none';
   const chatView = document.getElementById('dmFsChatView');
   chatView.style.display = 'flex'; chatView.style.flexDirection = 'column'; chatView.style.height = '100%';
@@ -3568,22 +3971,23 @@ async function openFsChat(id) {
 function dmFsBack() {
   document.getElementById('dmFsChatView').style.display = 'none';
   document.getElementById('dmFsListView').style.display = 'flex';
-  activeDmId = null;
-  hideRemoteTyping();
-  resetPresenceDots();
-  buildDMConvList();
+  activeDmId = null; hideRemoteTyping(); resetPresenceDots(); buildDMConvList();
 }
 
 function dmHandleKey(e, mode) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dmSend(mode); }
 }
 
-// ── SEND DM ──
+/* ────────────────────────────────────────────
+   FIX 2: dmSend — optimistic bubble now stores
+   the same minuteKey as the real message will
+   have, so appendIncomingMessage merges them.
+──────────────────────────────────────────── */
 async function dmSend(mode) {
   const inputId = mode === 'mobile' ? 'dmFsInput' : 'dmInput';
   const input = document.getElementById(inputId);
-
   const staged = mode === 'mobile' ? dmFsStagedMedia : dmStagedMedia;
+
   if (staged) {
     const msgsEl = document.getElementById(mode === 'mobile' ? 'dmFsMessages' : 'dmChatMessages');
     const contact = dmContacts.find(c => c.id === activeDmId);
@@ -3598,40 +4002,35 @@ async function dmSend(mode) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   const msgReplyTo = replyingTo ? { ...replyingTo } : null;
   cancelReply(mode);
-
   stopTypingBroadcast();
-
-  input.value = '';
-  input.style.height = 'auto';
+  input.value = ''; input.style.height = 'auto';
   if (mode === 'mobile') toggleDmFsSendBtn(); else toggleDmSendBtn();
 
   const msgsEl = document.getElementById(mode === 'mobile' ? 'dmFsMessages' : 'dmChatMessages');
   const contact = dmContacts.find(c => c.id === activeDmId);
 
-  // Optimistic bubble
-  const optimisticGroup = document.createElement('div');
-  optimisticGroup.className = 'dm-msg-group sent';
-  optimisticGroup.dataset.optimistic = 'true';
-  const rowEl = document.createElement('div');
-  rowEl.className = 'dm-msg-group-row';
-  const bubblesWrap = document.createElement('div');
-  bubblesWrap.className = 'dm-msg-bubbles';
+  // Compute minuteKey for NOW so we can tag the optimistic group
+  const now = new Date();
+  const minuteKey = `${user.id}_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}_${now.getHours()}_${now.getMinutes()}`;
+
+  // ── Optimistic bubble ──
+  // Check if last group matches minuteKey (same sender, same minute)
+  const allGroups = msgsEl.querySelectorAll('.dm-msg-group');
+  const lastGroup = allGroups[allGroups.length - 1];
+
   const bWrap = document.createElement('div');
   bWrap.className = 'dm-bubble-wrap';
   bWrap.dataset.text = text;
   bWrap.dataset.sender = 'You';
 
   const replyBtnOpt = document.createElement('button');
-  replyBtnOpt.className = 'dm-reply-btn';
-  replyBtnOpt.title = 'Reply';
+  replyBtnOpt.className = 'dm-reply-btn'; replyBtnOpt.title = 'Reply';
   replyBtnOpt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
   replyBtnOpt.onclick = (e) => { e.stopPropagation(); startReply(text, 'You'); };
 
   const moreBtnOpt = document.createElement('button');
-  moreBtnOpt.className = 'dm-more-btn';
-  moreBtnOpt.title = 'More options';
+  moreBtnOpt.className = 'dm-more-btn'; moreBtnOpt.title = 'More options';
   moreBtnOpt.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>`;
-  moreBtnOpt.onclick = (e) => { e.stopPropagation(); showMsgActionMenu(e, bWrap, null, true); };
 
   const bubble = document.createElement('div');
   bubble.className = 'dm-bubble sending';
@@ -3643,28 +4042,38 @@ async function dmSend(mode) {
     bubble.prepend(rp);
   }
 
-  const textNode = document.createElement('div');
-  textNode.textContent = text;
-  bubble.appendChild(textNode);
-
+  const textNode = document.createElement('div'); textNode.textContent = text; bubble.appendChild(textNode);
   const spin = document.createElement('span');
-  spin.className = 'dm-sending-icon';
-  spin.innerHTML = `<div class="dm-sending-spinner"></div>`;
+  spin.className = 'dm-sending-icon'; spin.innerHTML = `<div class="dm-sending-spinner"></div>`;
   bubble.appendChild(spin);
 
-  bWrap.appendChild(moreBtnOpt);
-  bWrap.appendChild(replyBtnOpt);
-  bWrap.appendChild(bubble);
-  bubblesWrap.appendChild(bWrap);
-  rowEl.appendChild(bubblesWrap);
-  optimisticGroup.appendChild(rowEl);
+  bWrap.appendChild(moreBtnOpt); bWrap.appendChild(replyBtnOpt); bWrap.appendChild(bubble);
 
-  const timeEl = document.createElement('div');
-  timeEl.className = 'dm-group-time';
-  timeEl.textContent = formatMsgTime(new Date());
-  optimisticGroup.appendChild(timeEl);
+  // FIX 2: merge into last group if same minute, else create new group
+  if (lastGroup && lastGroup.dataset.minuteKey === minuteKey && lastGroup.dataset.senderId === user.id) {
+    const bubblesWrap = lastGroup.querySelector('.dm-msg-bubbles');
+    if (bubblesWrap) {
+      bubblesWrap.appendChild(bWrap);
+      const timeEl = lastGroup.querySelector('.dm-group-time');
+      if (timeEl) timeEl.textContent = formatMsgTime(now);
+    }
+  } else {
+    // New group
+    const optimisticGroup = document.createElement('div');
+    optimisticGroup.className = 'dm-msg-group sent';
+    optimisticGroup.dataset.minuteKey = minuteKey;
+    optimisticGroup.dataset.senderId = user.id;
+    optimisticGroup.dataset.optimistic = 'true';
+    const rowEl = document.createElement('div'); rowEl.className = 'dm-msg-group-row';
+    const bubblesWrap = document.createElement('div'); bubblesWrap.className = 'dm-msg-bubbles';
+    bubblesWrap.appendChild(bWrap);
+    rowEl.appendChild(bubblesWrap);
+    optimisticGroup.appendChild(rowEl);
+    const timeEl = document.createElement('div'); timeEl.className = 'dm-group-time'; timeEl.textContent = formatMsgTime(now);
+    optimisticGroup.appendChild(timeEl);
+    msgsEl.appendChild(optimisticGroup);
+  }
 
-  msgsEl.appendChild(optimisticGroup);
   msgsEl.scrollTop = msgsEl.scrollHeight;
 
   try {
@@ -3675,25 +4084,27 @@ async function dmSend(mode) {
       media_url: staged ? staged.dataUrl : null,
       is_video: staged ? staged.isVideo : false
     };
-    if (msgReplyTo) {
-      insertData.reply_to_text = msgReplyTo.text;
-      insertData.reply_to_author = msgReplyTo.author;
-    }
+    if (msgReplyTo) { insertData.reply_to_text = msgReplyTo.text; insertData.reply_to_author = msgReplyTo.author; }
     const { data: inserted, error } = await supabaseClient.from('messages').insert(insertData).select().single();
     if (error) throw error;
 
-    optimisticGroup.remove();
-    reloadAndRenderMessages(activeDmId, mode);
+    // Upgrade optimistic bubble with real ID (the real-time INSERT will also fire but renderedMsgIds will block double render)
+    const spinner = bubble.querySelector('.dm-sending-icon');
+    if (spinner) spinner.remove();
+    bubble.classList.remove('sending');
+    bubble.style.opacity = '';
+    if (inserted?.id) {
+      bWrap.dataset.msgId = inserted.id;
+      bubble.dataset.msgId = inserted.id;
+      renderedMsgIds.add(inserted.id);
+      // Attach real msg to more button
+      moreBtnOpt.onclick = (e) => { e.stopPropagation(); showMsgActionMenu(e, bWrap, inserted, true); };
+    }
     updateContactLastMsg(activeDmId, inserted, user.id);
     buildDMConvList();
   } catch (err) {
-    spin.remove();
-    bubble.classList.remove('sending');
-    bubble.style.opacity = '0.5';
-    bubble.title = 'Failed to send';
-  } finally {
-    input.focus();
-  }
+    spin.remove(); bubble.classList.remove('sending'); bubble.style.opacity = '0.5'; bubble.title = 'Failed to send';
+  } finally { input.focus(); }
 }
 
 // ── DM MEDIA STAGING ──
@@ -3714,8 +4125,7 @@ function stageDmMediaFromDataUrl(dataUrl, isVideo, mode) {
     thumb.innerHTML = isVideo
       ? `<video src="${dataUrl}" style="width:72px;height:58px;object-fit:cover;border-radius:7px;"></video>`
       : `<img src="${dataUrl}" style="width:72px;height:58px;object-fit:cover;border-radius:7px;">`;
-    wrap.classList.add('show');
-    toggleDmFsSendBtn();
+    wrap.classList.add('show'); toggleDmFsSendBtn();
   } else {
     dmStagedMedia = { dataUrl, isVideo };
     const wrap = document.getElementById('dmMediaStagingWrap');
@@ -3723,8 +4133,7 @@ function stageDmMediaFromDataUrl(dataUrl, isVideo, mode) {
     thumb.innerHTML = isVideo
       ? `<video src="${dataUrl}" style="width:72px;height:58px;object-fit:cover;border-radius:7px;"></video>`
       : `<img src="${dataUrl}" style="width:72px;height:58px;object-fit:cover;border-radius:7px;">`;
-    wrap.classList.add('show');
-    toggleDmSendBtn();
+    wrap.classList.add('show'); toggleDmSendBtn();
   }
 }
 
@@ -3741,31 +4150,35 @@ function clearDmFsStaging() {
 }
 
 function appendDmMediaBubble(container, dataUrl, isVideo, currentUserId, contact) {
+  const now = new Date();
+  const minuteKey = currentUserId ? `${currentUserId}_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}_${now.getHours()}_${now.getMinutes()}` : '';
+
   const groupEl = document.createElement('div');
   groupEl.className = 'dm-msg-group sent';
-  const rowEl = document.createElement('div');
-  rowEl.className = 'dm-msg-group-row';
-  const bubblesWrap = document.createElement('div');
-  bubblesWrap.className = 'dm-msg-bubbles';
-  const bWrap = document.createElement('div');
-  bWrap.className = 'dm-bubble-wrap';
-  const bubble = document.createElement('div');
-  bubble.className = 'dm-bubble dm-bubble-media-only';
+  groupEl.dataset.minuteKey = minuteKey;
+  groupEl.dataset.senderId = currentUserId || '';
+  const rowEl = document.createElement('div'); rowEl.className = 'dm-msg-group-row';
+  const bubblesWrap = document.createElement('div'); bubblesWrap.className = 'dm-msg-bubbles';
+  const bWrap = document.createElement('div'); bWrap.className = 'dm-bubble-wrap';
+  const mediaWrap = document.createElement('div');
+  mediaWrap.className = 'dm-bubble-media-only';
   if (isVideo) {
-    bubble.innerHTML = `<video controls src="${dataUrl}" style="max-width:220px;max-height:180px;border-radius:12px;display:block;box-shadow:0 2px 10px rgba(0,0,0,0.12);"></video>`;
+    const vid = document.createElement('video');
+    vid.controls = true; vid.src = dataUrl;
+    vid.style.cssText = 'max-width:220px;max-height:180px;border-radius:12px;display:block;box-shadow:0 2px 10px rgba(0,0,0,0.12);';
+    mediaWrap.appendChild(vid);
   } else {
     const img = document.createElement('img');
     img.src = dataUrl;
     img.style.cssText = 'max-width:220px;max-height:180px;border-radius:12px;display:block;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.12);';
     img.onclick = () => openLightbox(dataUrl);
-    bubble.appendChild(img);
+    mediaWrap.appendChild(img);
   }
-  bWrap.appendChild(bubble);
-  bubblesWrap.appendChild(bWrap);
-  rowEl.appendChild(bubblesWrap);
-  groupEl.appendChild(rowEl);
-  container.appendChild(groupEl);
-  container.scrollTop = container.scrollHeight;
+  bWrap.appendChild(mediaWrap);
+  bubblesWrap.appendChild(bWrap); rowEl.appendChild(bubblesWrap); groupEl.appendChild(rowEl);
+  const timeEl = document.createElement('div'); timeEl.className = 'dm-group-time'; timeEl.textContent = formatMsgTime(now);
+  groupEl.appendChild(timeEl);
+  container.appendChild(groupEl); container.scrollTop = container.scrollHeight;
 }
 
 function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('show'); }
@@ -3784,8 +4197,7 @@ function closeProfileDropdown() {
   document.getElementById('switchArrow').style.transform = '';
 }
 document.addEventListener('click', (e) => {
-  if (!document.getElementById('profileBtn').contains(e.target) &&
-      !document.getElementById('profileDropdown').contains(e.target)) closeProfileDropdown();
+  if (!document.getElementById('profileBtn').contains(e.target) && !document.getElementById('profileDropdown').contains(e.target)) closeProfileDropdown();
 });
 
 let accountSwitcherOpen = false;
@@ -3821,85 +4233,35 @@ function openProfileEdit() {
   setTimeout(() => document.getElementById('peDisplayName').focus(), 50);
 }
 function closeProfileEdit() { document.getElementById('profileEditOverlay').classList.remove('show'); }
+
 async function handleAvatarUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-
-  const { data: existingProfile } = await supabaseClient
-    .from('profiles')
-    .select('avatar_url')
-    .eq('id', user.id)
-    .single();
-
+  const { data: existingProfile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
   if (existingProfile?.avatar_url) {
-    try {
-      const url = existingProfile.avatar_url;
-      const path = url.split('/avatars/')[1];
-      if (path) {
-        await supabaseClient.storage.from('avatars').remove([path]);
-      }
-    } catch (err) {
-      console.warn('Old avatar delete failed:', err);
-    }
+    try { const path = existingProfile.avatar_url.split('/avatars/')[1]; if (path) await supabaseClient.storage.from('avatars').remove([path]); } catch (err) {}
   }
-
   const fileExt = file.name.split('.').pop();
   const filePath = `${user.id}/avatar.${fileExt}`;
-
-  const { error: uploadError } = await supabaseClient
-    .storage
-    .from('avatars')
-    .upload(filePath, file, { upsert: true });
-
-  if (uploadError) {
-    alert('Upload failed: ' + uploadError.message);
-    return;
-  }
-
-  const { data } = supabaseClient
-    .storage
-    .from('avatars')
-    .getPublicUrl(filePath);
-
+  const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(filePath, file, { upsert: true });
+  if (uploadError) { alert('Upload failed: ' + uploadError.message); return; }
+  const { data } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
   const publicUrl = data.publicUrl + `?t=${Date.now()}`;
-
-  const { error: dbError } = await supabaseClient
-    .from('profiles')
-    .update({ avatar_url: publicUrl })
-    .eq('id', user.id);
-
-  if (dbError) {
-    alert('DB update failed: ' + dbError.message);
-    return;
-  }
-
+  const { error: dbError } = await supabaseClient.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+  if (dbError) { alert('DB update failed: ' + dbError.message); return; }
   profile.avatarUrl = publicUrl;
   renderProfileEverywhere();
 }
+
 async function removeAvatar() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-
-  const { data } = await supabaseClient
-    .from('profiles')
-    .select('avatar_url')
-    .eq('id', user.id)
-    .single();
-
+  const { data } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
   if (data?.avatar_url) {
-    try {
-      const path = data.avatar_url.split('/avatars/')[1];
-      if (path) {
-        await supabaseClient.storage.from('avatars').remove([path]);
-      }
-    } catch (err) {
-      console.warn('Delete failed:', err);
-    }
+    try { const path = data.avatar_url.split('/avatars/')[1]; if (path) await supabaseClient.storage.from('avatars').remove([path]); } catch (err) {}
   }
-
   await supabaseClient.from('profiles').update({ avatar_url: null }).eq('id', user.id);
   profile.avatarUrl = null;
   renderProfileEverywhere();
@@ -3914,30 +4276,18 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const adminOpen = document.getElementById('adminOverlay').classList.contains('show');
     if (adminOpen) { closeAdminPopup(); return; }
-    if (dmOpen) {
-      closeDM();
-      return;
-    }
+    if (dmOpen) { closeDM(); return; }
     openAdminPopup();
   }
   if (e.altKey && e.key === 'Backspace') {
     e.preventDefault();
-    if (dmOpen && activeDmId) { openClearChatConfirm(); }
+    if (dmOpen && activeDmId) openClearChatConfirm();
   }
   if (e.key === 'Escape') {
-    if (dmOpen) {
-      closeDM();
-      return;
-    }
+    if (dmOpen) { closeDM(); return; }
     if (document.getElementById('clearChatOverlay').classList.contains('show')) { closeClearChatConfirm(); return; }
     if (document.getElementById('confirmOverlay').classList.contains('show')) { closeConfirm(); return; }
-    closeMsgActionMenu();
-    closeAdminPopup();
-    closeProfileEdit();
-    closeLogout();
-    closeProfileDropdown();
-    closeLightbox();
-    closeCtxMenu();
+    closeMsgActionMenu(); closeAdminPopup(); closeProfileEdit(); closeLogout(); closeProfileDropdown(); closeLightbox(); closeCtxMenu();
   }
 });
 
@@ -3999,8 +4349,8 @@ function insertEmoji(emoji) {
 function toggleMediaButton() {
   const input = document.getElementById('userInput');
   const sendBtn = document.getElementById('sendBtn');
-  if (input.value.trim() === '' && !aiStagedMedia) { sendBtn.disabled = true; }
-  else { sendBtn.disabled = false; }
+  if (input.value.trim() === '' && !aiStagedMedia) sendBtn.disabled = true;
+  else sendBtn.disabled = false;
 }
 
 function toggleDmSendBtn() {
@@ -4166,32 +4516,19 @@ async function handleSignupSubmit() {
 async function preloadAllChats() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-  const { data, error } = await supabaseClient
-    .from('messages')
-    .select('*')
+  const { data, error } = await supabaseClient.from('messages').select('*')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
-  if (error || !data) {
-    buildDMConvList();
-    return;
-  }
-
+  if (error || !data) { buildDMConvList(); return; }
   const latestMap = new Map();
   const sentByMeSet = new Set();
-
   data.forEach(msg => {
     const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-    if (!latestMap.has(otherId)) { latestMap.set(otherId, msg); }
-    if (msg.sender_id === user.id) {
-      sentByMeSet.add(otherId);
-    }
+    if (!latestMap.has(otherId)) latestMap.set(otherId, msg);
+    if (msg.sender_id === user.id) sentByMeSet.add(otherId);
   });
-
-  dmContacts.forEach(c => {
-    if (sentByMeSet.has(c.id)) c.sentByMe = true;
-  });
-
-  latestMap.forEach((msg, userId) => { updateContactLastMsg(userId, msg, user.id); });
+  dmContacts.forEach(c => { if (sentByMeSet.has(c.id)) c.sentByMe = true; });
+  latestMap.forEach((msg, userId) => updateContactLastMsg(userId, msg, user.id));
   buildDMConvList();
 }
 
@@ -4208,9 +4545,435 @@ window.addEventListener('load', async function() {
   checkAuth();
 });
 
-document.getElementById('dmInput')?.addEventListener('blur', () => {
-  stopTypingBroadcast();
+document.getElementById('dmInput')?.addEventListener('blur', () => { stopTypingBroadcast(); });
+</script>
+
+<!-- NEW FEATURES: Code Editor, Calculator, Chat History, Settings extras -->
+<script>
+
+// ── CODE EDITOR LINE NUMBERS & AUTO-INDENT ──
+function updateCodeLineNumbers() {
+  const ta = document.getElementById('codeInput');
+  const lnEl = document.getElementById('codeLineNumbers');
+  if (!ta || !lnEl) return;
+  const lineCount = ta.value.split('\n').length;
+  lnEl.textContent = Array.from({ length: lineCount }, (_, i) => i + 1).join('\n');
+  // Sync scroll
+  lnEl.scrollTop = ta.scrollTop;
+}
+
+// Sync line number scroll with textarea scroll
+document.addEventListener('DOMContentLoaded', function() {
+  const ta = document.getElementById('codeInput');
+  if (!ta) return;
+  ta.addEventListener('scroll', () => {
+    const lnEl = document.getElementById('codeLineNumbers');
+    if (lnEl) lnEl.scrollTop = ta.scrollTop;
+  });
+  ta.addEventListener('input', updateCodeLineNumbers);
+  updateCodeLineNumbers();
 });
+
+// Auto-indent for code editor
+document.addEventListener('keydown', function(e) {
+  if (!document.activeElement || document.activeElement.id !== 'codeInput') return;
+  const ta = document.activeElement;
+
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+    updateCodeLineNumbers();
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const s = ta.selectionStart;
+    const textBefore = ta.value.substring(0, s);
+    const lines = textBefore.split('\n');
+    const currentLine = lines[lines.length - 1];
+    const indentMatch = currentLine.match(/^(\s*)/);
+    let indent = indentMatch ? indentMatch[1] : '';
+    // Auto-increase indent after { ( [
+    const lastNonSpace = currentLine.trimEnd().slice(-1);
+    if (['{','(','['].includes(lastNonSpace)) indent += '  ';
+    const insertion = '\n' + indent;
+    ta.value = ta.value.substring(0, s) + insertion + ta.value.substring(ta.selectionEnd);
+    ta.selectionStart = ta.selectionEnd = s + insertion.length;
+    updateCodeLineNumbers();
+  }
+});
+
+// ── CODE EDITOR ──
+function onLangChange() {
+  const lang = document.getElementById('langSelect').value;
+  const iframe = document.getElementById('codeOutput');
+  const textOut = document.getElementById('codeOutputText');
+  iframe.style.display = 'none';
+  textOut.style.display = 'none';
+  const hints = {
+    html: '<!-- HTML / CSS / JS\n     Write full HTML page or just body content -->\n',
+    javascript: '// JavaScript — console.log outputs shown below\n',
+    java: '// Java simulation — System.out.println supported\npublic class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n'
+  };
+  const curr = document.getElementById('codeInput').value;
+  if (!curr.trim()) document.getElementById('codeInput').value = hints[lang] || '';
+}
+
+function runCode() {
+  const lang = document.getElementById('langSelect').value;
+  const code = document.getElementById('codeInput').value;
+  const iframe = document.getElementById('codeOutput');
+  const textOut = document.getElementById('codeOutputText');
+
+  if (lang === 'html') {
+    iframe.style.display = 'block';
+    textOut.style.display = 'none';
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    // Inject theme colors
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const prefix = `<style>body{background:${isDark ? '#0e0e10' : '#f4f4f6'};color:${isDark ? '#e4e4e7' : '#18181b'};font-family:system-ui,sans-serif;margin:0;padding:16px;}</style>`;
+    doc.write(prefix + code);
+    doc.close();
+  } else if (lang === 'javascript') {
+    iframe.style.display = 'none';
+    textOut.style.display = 'block';
+    textOut.innerHTML = '';
+    const logs = [];
+    const origLog = console.log;
+    const origErr = console.error;
+    const origWarn = console.warn;
+    const capture = (type) => (...args) => {
+      logs.push({ type, text: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ') });
+    };
+    console.log = capture('log');
+    console.error = capture('error');
+    console.warn = capture('warn');
+    try {
+      // eslint-disable-next-line no-new-func
+      new Function(code)();
+    } catch(e) {
+      logs.push({ type: 'error', text: e.toString() });
+    }
+    console.log = origLog;
+    console.error = origErr;
+    console.warn = origWarn;
+    if (logs.length === 0) {
+      textOut.innerHTML = '<span style="color:var(--text3);font-size:12px;">No output</span>';
+    } else {
+      logs.forEach(l => {
+        const line = document.createElement('div');
+        line.style.marginBottom = '4px';
+        if (l.type === 'error') line.style.color = '#ef4444';
+        else if (l.type === 'warn') line.style.color = '#f59e0b';
+        line.textContent = l.text;
+        textOut.appendChild(line);
+      });
+    }
+  } else if (lang === 'java') {
+    iframe.style.display = 'none';
+    textOut.style.display = 'block';
+    textOut.innerHTML = '';
+    // Simulate basic Java System.out.println
+    const lines = code.split('\n');
+    const output = [];
+    lines.forEach(line => {
+      const m = line.match(/System\.out\.println\s*\(([^;]+)\)/);
+      if (m) {
+        let val = m[1].trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          output.push(val.slice(1, -1));
+        } else {
+          output.push(val);
+        }
+      }
+    });
+    if (output.length === 0) {
+      textOut.innerHTML = '<span style="color:var(--text3);font-size:12px;">No System.out.println output detected</span>';
+    } else {
+      output.forEach(line => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '2px';
+        div.textContent = line;
+        textOut.appendChild(div);
+      });
+    }
+  }
+  // Save to localStorage
+  localStorage.setItem('hether_code_' + lang, document.getElementById('codeInput').value);
+  localStorage.setItem('hether_code_lang', lang);
+}
+
+function clearCodeOutput() {
+  document.getElementById('codeOutput').style.display = 'none';
+  document.getElementById('codeOutputText').style.display = 'none';
+  document.getElementById('codeOutputText').innerHTML = '';
+  const doc = document.getElementById('codeOutput').contentDocument || document.getElementById('codeOutput').contentWindow?.document;
+  if (doc) { doc.open(); doc.write(''); doc.close(); }
+}
+
+// Restore last code editor state
+function restoreCodeEditor() {
+  const lang = localStorage.getItem('hether_code_lang') || 'html';
+  const sel = document.getElementById('langSelect');
+  if (sel) { sel.value = lang; const savedCode = localStorage.getItem('hether_code_' + lang); if (savedCode !== null) document.getElementById('codeInput').value = savedCode; }
+  updateCodeLineNumbers();
+}
+document.addEventListener('DOMContentLoaded', restoreCodeEditor);
+
+// ── CALCULATOR ──
+let calcExpr = '';
+let calcHasResult = false;
+
+function calcAction(btn) {
+  const display = document.getElementById('calcResult');
+  const exprEl = document.getElementById('calcExpr');
+  const ops = ['+','-','*','/','%'];
+
+  if (btn === 'AC') {
+    calcExpr = ''; calcHasResult = false;
+    display.textContent = '0'; exprEl.textContent = '';
+    return;
+  }
+  if (btn === '=') {
+    try {
+      exprEl.textContent = calcExpr + ' =';
+      const result = Function('"use strict"; return (' + calcExpr + ')')();
+      const formatted = Number.isInteger(result) ? result : parseFloat(result.toFixed(10));
+      display.textContent = formatted;
+      calcExpr = String(formatted);
+      calcHasResult = true;
+    } catch(e) {
+      display.textContent = 'Error';
+      calcExpr = ''; calcHasResult = false; exprEl.textContent = '';
+    }
+    return;
+  }
+  if (ops.includes(btn)) {
+    calcHasResult = false;
+    // Prevent double operators
+    if (calcExpr && ops.includes(calcExpr.slice(-1))) calcExpr = calcExpr.slice(0, -1);
+    calcExpr += btn;
+  } else {
+    if (calcHasResult && !ops.includes(btn)) { calcExpr = btn; calcHasResult = false; }
+    else calcExpr += btn;
+  }
+  // Evaluate live
+  try {
+    const live = Function('"use strict"; return (' + calcExpr + ')')();
+    display.textContent = parseFloat(live.toFixed(10));
+  } catch(e) {
+    display.textContent = calcExpr;
+  }
+  exprEl.textContent = calcExpr;
+}
+
+// Calculator keyboard support
+document.addEventListener('keydown', function(e) {
+  if (currentView !== 'calc') return;
+  const map = {'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9','+':'+','-':'-','*':'*','/':'/','%':'%','.':'.',',':'.','Enter':'=','=':'=','Escape':'AC','Backspace':'BS'};
+  const action = map[e.key];
+  if (!action) return;
+  if (action === 'BS') {
+    calcExpr = calcExpr.slice(0,-1) || '0';
+    const el = document.getElementById('calcResult');
+    el.textContent = calcExpr || '0';
+    document.getElementById('calcExpr').textContent = calcExpr;
+    return;
+  }
+  calcAction(action);
+});
+
+// ── CHAT HISTORY (localStorage-backed) ──
+let _chatHistoryStore = JSON.parse(localStorage.getItem('hether_history') || '[]');
+
+function saveChatTurn(question, answer) {
+  if (!question || !answer) return;
+  const setting = localStorage.getItem('hether_setting_saveChat');
+  if (setting === 'off') return;
+  _chatHistoryStore.unshift({ id: Date.now(), q: question, a: answer, ts: new Date().toISOString() });
+  if (_chatHistoryStore.length > 100) _chatHistoryStore = _chatHistoryStore.slice(0, 100);
+  localStorage.setItem('hether_history', JSON.stringify(_chatHistoryStore));
+}
+
+function renderHistoryList() {
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  _chatHistoryStore = JSON.parse(localStorage.getItem('hether_history') || '[]');
+  list.innerHTML = '';
+  if (_chatHistoryStore.length === 0) {
+    list.innerHTML = `<div class="history-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>No chat history yet.</p></div>`;
+    return;
+  }
+  _chatHistoryStore.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.onclick = () => { loadHistoryItem(item); };
+    const d = new Date(item.ts);
+    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    div.innerHTML = `<div class="history-item-q">${escHtml(item.q)}</div><div class="history-item-a">${escHtml(item.a.substring(0, 100))}${item.a.length > 100 ? '…' : ''}</div><div class="history-item-time">${dateStr}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function loadHistoryItem(item) {
+  // Load the Q&A into chat view
+  showView('chat');
+  const welcome = document.getElementById('welcomeScreen');
+  if (welcome) welcome.remove();
+  appendMessage('user', item.q);
+  appendMessage('ai', item.a);
+}
+
+function clearAllHistory() {
+  if (!confirm('Clear all chat history?')) return;
+  _chatHistoryStore = [];
+  localStorage.removeItem('hether_history');
+  renderHistoryList();
+}
+
+// ── SETTINGS EXTRAS ──
+function toggleSetting(key) {
+  const btn = document.getElementById(key + 'Toggle');
+  if (!btn) return;
+  const isOn = btn.classList.contains('on');
+  btn.classList.toggle('on', !isOn);
+  localStorage.setItem('hether_setting_' + key, !isOn ? 'on' : 'off');
+}
+
+function initSettings() {
+  const keys = ['compact', 'saveChat', 'enterSend', 'sound'];
+  const defaults = { saveChat: 'on', enterSend: 'on' };
+  keys.forEach(key => {
+    const val = localStorage.getItem('hether_setting_' + key) || defaults[key] || 'off';
+    const btn = document.getElementById(key + 'Toggle');
+    if (btn) btn.classList.toggle('on', val === 'on');
+  });
+}
+initSettings();
+
+function calcStorageUsage() {
+  let total = 0;
+  for (const key of Object.keys(localStorage)) {
+    total += (localStorage.getItem(key) || '').length;
+  }
+  const kb = (total / 1024).toFixed(1);
+  const el = document.getElementById('storageUsageText');
+  if (el) el.textContent = `${kb} KB used (estimated)`;
+}
+
+function exportData() {
+  const data = {
+    notes: JSON.parse(localStorage.getItem('hether_notes') || '[]'),
+    history: JSON.parse(localStorage.getItem('hether_history') || '[]'),
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'hether_export.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function clearAllData() {
+  if (!confirm('This will permanently wipe all local data including notes, history, and preferences. Continue?')) return;
+  const keysToKeep = [];
+  const allKeys = Object.keys(localStorage).filter(k => k.startsWith('hether_'));
+  allKeys.forEach(k => localStorage.removeItem(k));
+  alert('All local data cleared.');
+  location.reload();
+}
+
+// ── INFO MODALS (Privacy, Terms, Security) ──
+const modalContent = {
+  privacy: {
+    title: 'Privacy Policy',
+    body: `<p><strong>Last updated:</strong> 2025</p>
+<p>hether is committed to protecting your privacy. Here's what you need to know about how your data is handled:</p>
+<p><strong>What we collect</strong><br>
+hether stores your notes, chat history, and preferences locally on your device using browser localStorage. This data does not leave your device unless you explicitly export it.</p>
+<p><strong>Account data</strong><br>
+When you create an account, we store your email address and chosen username to identify you. This data is stored securely using Supabase infrastructure.</p>
+<p><strong>Messages</strong><br>
+Messages sent between users are stored in our secure database to enable real-time communication. Messages are transmitted over encrypted connections (HTTPS/TLS).</p>
+<p><strong>AI interactions</strong><br>
+Conversations with hetherGPT are processed to generate responses. Chat history is stored locally on your device only — we do not store your AI conversations on our servers.</p>
+<p><strong>No advertising</strong><br>
+hether does not display advertisements and does not sell your data to third parties.</p>
+<p><strong>Data deletion</strong><br>
+You can clear all local data at any time via Settings. To delete your account and associated data, contact us.</p>
+<p><strong>Cookies &amp; tracking</strong><br>
+We do not use tracking cookies. We may use essential session cookies for authentication purposes only.</p>
+<p><strong>Contact</strong><br>
+For privacy-related questions, please reach out to us through the app.</p>`
+  },
+  terms: {
+    title: 'Terms of Service',
+    body: `<p><strong>Last updated:</strong> 2025</p>
+<p>By using hether, you agree to the following terms:</p>
+<p><strong>Acceptable Use</strong><br>
+You agree to use hether only for lawful purposes. You must not use hether to harass, harm, or threaten others, spread misinformation, transmit spam or malicious content, or attempt to gain unauthorized access to any system.</p>
+<p><strong>Account Responsibility</strong><br>
+You are responsible for maintaining the security of your account credentials. You agree not to share your account with others or use another person's account without their explicit permission.</p>
+<p><strong>Content</strong><br>
+You retain ownership of content you create in hether. By using the platform, you grant us a limited license to store and transmit your content as necessary to provide the service.</p>
+<p><strong>AI Usage</strong><br>
+hetherGPT is provided as an informational tool. Responses may not always be accurate. Do not rely on AI responses for medical, legal, financial, or safety-critical decisions without verification from qualified professionals.</p>
+<p><strong>Modifications</strong><br>
+We reserve the right to modify or discontinue the service at any time. We will provide reasonable notice of significant changes.</p>
+<p><strong>Limitation of Liability</strong><br>
+hether is provided "as is" without warranty of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>`
+  },
+  security: {
+    title: 'Security Information',
+    body: `<p>hether takes the security of your data seriously. Here is an overview of the security measures in place:</p>
+<p><strong>Encryption in transit</strong><br>
+All data transmitted between your device and our servers is encrypted using TLS (Transport Layer Security). This prevents interception of your messages and account information.</p>
+<p><strong>Authentication</strong><br>
+Account authentication is handled by Supabase, which implements industry-standard security practices including bcrypt password hashing. Passwords are never stored in plaintext.</p>
+<p><strong>Local storage</strong><br>
+Data stored locally (notes, chat history, preferences) is saved in your browser's localStorage. This data is accessible only by hether within your browser and is not transmitted to our servers.</p>
+<p><strong>Session management</strong><br>
+Login sessions are managed with secure tokens. You can log out at any time to invalidate your session.</p>
+<p><strong>Responsible disclosure</strong><br>
+If you discover a security vulnerability in hether, please report it responsibly. Do not exploit or publicly disclose the vulnerability before we've had the opportunity to address it.</p>
+<p><strong>Best practices for users</strong></p>
+<ul style="margin:8px 0 8px 16px;line-height:2;">
+  <li>Use a strong, unique password for your account</li>
+  <li>Do not share your login credentials with others</li>
+  <li>Log out when using shared or public devices</li>
+  <li>Keep your device and browser updated</li>
+</ul>`
+  }
+};
+
+function showModal(type) {
+  const content = modalContent[type];
+  if (!content) return;
+  document.getElementById('infoModalTitle').textContent = content.title;
+  document.getElementById('infoModalBody').innerHTML = content.body;
+  document.getElementById('infoModalOverlay').classList.add('show');
+}
+function closeInfoModal() {
+  document.getElementById('infoModalOverlay').classList.remove('show');
+}
+document.getElementById('infoModalOverlay')?.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeInfoModal();
+});
+
+// ── KEYBOARD SHORTCUT: ESC closes admin if open ──
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('adminOverlay')?.classList.contains('show')) {
+      _adminSessionValid = false;
+      adminAuthenticated = false;
+      closeAdminPopup();
+    }
+  }
+});
+
 </script>
 </body>
 </html>
