@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="faviconl.png">
   <link rel="icon" type="image/png" href="faviconl.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-visual">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hether - Coding Platform </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -1283,6 +1283,7 @@ body {
   border: 2px solid var(--surface);
   display: none;
   z-index: 2;
+  transition: background 0.3s ease;
 }
 .dm-conv-presence-dot.online { display: block; background: #22c55e; }
 .dm-conv-presence-dot.away   { display: block; background: #3b82f6; }
@@ -1784,23 +1785,9 @@ body {
 /* ── FULLSCREEN DM (mobile) ── */
 .dm-fullscreen {
   display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 100dvh;
-  z-index: 400;
+  position: fixed; inset: 0; z-index: 400;
   flex-direction: column;
   background: var(--surface);
-}
-/* Covers the gap between the panel and the keyboard during the viewport resize delay */
-.dm-fullscreen::after {
-  content: '';
-  position: fixed;
-  left: 0; right: 0;
-  bottom: -200px; /* extend well past screen bottom */
-  height: 200px;
-  background: var(--surface);
-  pointer-events: none;
-  z-index: -1;
 }
 .dm-fs-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
@@ -1828,7 +1815,7 @@ body {
   padding: 14px 14px; display: flex; flex-direction: column; gap: 2px;
   min-height: 0;
 }
-.dm-fs-input-area { padding: 10px 12px 14px; background: var(--surface); flex-shrink: 0; }
+.dm-fs-input-area { padding: 10px 12px 14px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
 .dm-fs-input-row { display: flex; gap: 6px; align-items: flex-end; background: var(--input-bg); border: 1px solid var(--border); border-radius: 22px; padding: 6px 8px 6px 6px; }
 #dmFsInput {
   flex: 1; background: transparent; border: none; outline: none;
@@ -3416,202 +3403,126 @@ const subscriptionManager = {
 };
 
 // ── PRESENCE SYSTEM ──
-// Uses Supabase Realtime with two layers:
-//   1. Presence tracking  — syncs online/away state across all clients in real time
-//   2. Broadcast          — fires an instant "offline" signal before channel teardown
-//      so the other user's dot disappears immediately, not after a heartbeat timeout.
 let presenceChannel = null;
-let onlineUsers = new Map(); // userId -> 'online' | 'away'
-let _myPresenceStatus = 'online';
-
-// What status should we broadcast right now?
-// online = panel open + tab/window focused
-// away   = panel open but tab hidden or window blurred
-function _computeMyStatus() {
-  if (document.hidden) return 'away';
-  if (!document.hasFocus()) return 'away';
-  return 'online';
-}
-
-// Push our current status to the presence channel + our personal broadcast channel.
-// Ghost mode: only suppress 'away' — green still shows when focused.
-function _broadcastPresence() {
-  if (!presenceChannel || !currentUser || !dmOpen) return;
-  const status = _computeMyStatus();
-  if (_ghostModeEnabled && status === 'away') return; // ghost: no blue dot
-  if (_myPresenceStatus === status) return;           // no change, skip
-  _myPresenceStatus = status;
-  // Presence track — syncs state across all clients on shared channel
-  presenceChannel.track({
-    user_id: currentUser.id,
-    status,
-    online_at: new Date().toISOString()
-  }).catch(() => {});
-  // Also broadcast on our personal channel so the other user's listener
-  // picks up online/away changes instantly
-  presenceChannel.send({
-    type: 'broadcast',
-    event: 'status',
-    payload: { user_id: currentUser.id, status }
-  }).catch(() => {});
-}
-
-// All three focus/visibility events re-evaluate and broadcast
-document.addEventListener('visibilitychange', _broadcastPresence);
-window.addEventListener('focus', _broadcastPresence);
-window.addEventListener('blur', _broadcastPresence);
-
-// Personal offline channels: each user subscribes to a channel named after
-// the OTHER user's ID. When someone closes the panel they broadcast on their
-// own personal channel → the other side hears it instantly regardless of
-// shared-channel timing issues.
-let _personalOfflineChannel = null; // listens for the other user going offline
-
-async function _subscribeToUserOffline(targetUserId) {
-  if (_personalOfflineChannel) {
-    try { await supabaseClient.removeChannel(_personalOfflineChannel); } catch(e) {}
-    _personalOfflineChannel = null;
-  }
-  if (!targetUserId) return;
-  _personalOfflineChannel = supabaseClient.channel('hether-offline:' + targetUserId, {
-    config: { broadcast: { ack: false } }
-  });
-  _personalOfflineChannel
-    .on('broadcast', { event: 'offline' }, ({ payload }) => {
-      const uid = payload?.user_id;
-      if (uid) { onlineUsers.delete(uid); updatePresenceDots(); }
-    })
-    .on('broadcast', { event: 'status' }, ({ payload }) => {
-      const uid = payload?.user_id;
-      const s   = payload?.status;
-      if (uid && s) { onlineUsers.set(uid, s); updatePresenceDots(); }
-    })
-    .subscribe();
-}
-
-async function _unsubscribeFromUserOffline() {
-  if (_personalOfflineChannel) {
-    try { await supabaseClient.removeChannel(_personalOfflineChannel); } catch(e) {}
-    _personalOfflineChannel = null;
-  }
-}
+// Map<userId, 'online'|'away'> — 'online'=green, 'away'=blue
+let presenceMap = new Map();
+// Keep backward-compat alias used elsewhere in the file
+const onlineUsers = { has: (id) => presenceMap.has(id) };
 
 async function joinPresence() {
   if (!currentUser) return;
-  // Tear down any stale channel first
   if (presenceChannel) {
-    try { await supabaseClient.removeChannel(presenceChannel); } catch(e) {}
+    await supabaseClient.removeChannel(presenceChannel);
     presenceChannel = null;
   }
 
-  _myPresenceStatus = _computeMyStatus();
-  // Ghost mode + unfocused: start as online (never broadcast away on ghost)
-  if (_ghostModeEnabled && _myPresenceStatus === 'away') _myPresenceStatus = 'online';
-
-  presenceChannel = supabaseClient.channel('hether-presence', {
-    config: {
-      presence: { key: currentUser.id },
-      broadcast: { ack: true }
-    }
+  presenceChannel = supabaseClient.channel('admin-dm-presence', {
+    config: { presence: { key: currentUser.id } }
   });
 
   presenceChannel
-    // ── Presence sync: fires on subscribe and whenever state changes ──
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
-      onlineUsers.clear();
-      Object.keys(state).forEach(key => {
-        const metas = state[key];
-        const meta = metas[metas.length - 1];
-        onlineUsers.set(key, meta.status || 'online');
+      presenceMap.clear();
+      Object.entries(state).forEach(([key, payloads]) => {
+        // payloads is an array; use the latest entry
+        const latest = Array.isArray(payloads) ? payloads[payloads.length - 1] : payloads;
+        const s = latest?.presence_status || 'online';
+        if (s === 'online' || s === 'away') presenceMap.set(key, s);
       });
       updatePresenceDots();
     })
     .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      const meta = newPresences[newPresences.length - 1];
-      onlineUsers.set(key, meta.status || 'online');
+      const latest = Array.isArray(newPresences) ? newPresences[newPresences.length - 1] : newPresences;
+      const s = latest?.presence_status || 'online';
+      if (s === 'online' || s === 'away') presenceMap.set(key, s);
+      else presenceMap.delete(key);
       updatePresenceDots();
     })
-    .on('presence', { event: 'leave' }, ({ key }) => {
-      // Fires when heartbeat times out — fallback for unclean disconnects
-      onlineUsers.delete(key);
-      updatePresenceDots();
-    })
+    .on('presence', { event: 'leave' }, ({ key }) => { presenceMap.delete(key); updatePresenceDots(); })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({
-          user_id: currentUser.id,
-          status: _myPresenceStatus,
-          online_at: new Date().toISOString()
-        });
+        await _updateMyPresenceTrack();
       }
     });
-
-  // Also subscribe to the current chat partner's personal offline channel
-  if (activeDmId) await _subscribeToUserOffline(activeDmId);
 }
 
 async function leavePresence() {
-  if (presenceChannel && currentUser) {
-    const dyingChannel = presenceChannel;
+  if (presenceChannel) {
+    try { await presenceChannel.untrack(); } catch(e) {}
+    await supabaseClient.removeChannel(presenceChannel);
     presenceChannel = null;
-    try {
-      // Broadcast on our personal channel — the other user is subscribed to it
-      // and hears this instantly before any heartbeat timeout.
-      const myPersonalChannel = supabaseClient.channel('hether-offline:' + currentUser.id, {
-        config: { broadcast: { ack: false } }
-      });
-      await new Promise(resolve => {
-        myPersonalChannel.subscribe(async (s) => {
-          if (s === 'SUBSCRIBED') {
-            await myPersonalChannel.send({
-              type: 'broadcast',
-              event: 'offline',
-              payload: { user_id: currentUser.id }
-            }).catch(() => {});
-            await new Promise(r => setTimeout(r, 60));
-            await supabaseClient.removeChannel(myPersonalChannel).catch(() => {});
-            resolve();
-          }
-        });
-        setTimeout(resolve, 800); // safety timeout
-      });
-    } catch(e) {}
-    try { await dyingChannel.untrack(); } catch(e) {}
-    try { await supabaseClient.removeChannel(dyingChannel); } catch(e) {}
   }
-  await _unsubscribeFromUserOffline();
-  _myPresenceStatus = 'online';
-  onlineUsers.clear();
+  presenceMap.clear();
   updatePresenceDots();
 }
 
-function _applyDot(dot, status) {
+// Recompute and push my own presence payload based on current ghost/tab/admin state
+async function _updateMyPresenceTrack() {
+  if (!presenceChannel || !currentUser) return;
+  const tabVisible = document.visibilityState === 'visible' && document.hasFocus();
+  const adminOpen  = _isAdminPanelOpen();
+
+  let newStatus = null; // null = untrack (appear offline)
+
+  if (_ghostModeEnabled) {
+    // Ghost ON: only show green when tab is active, otherwise appear offline
+    if (tabVisible) {
+      newStatus = 'online';
+    }
+    // blurred/hidden → null → untrack
+  } else {
+    // Ghost OFF:
+    if (tabVisible) {
+      newStatus = 'online'; // green — tab focused and admin/dm open or not
+    } else if (adminOpen) {
+      newStatus = 'away';   // blue — tab blurred but admin panel still flagged open
+    }
+    // tab hidden AND admin closed → null → untrack
+  }
+
+  try {
+    if (newStatus) {
+      await presenceChannel.track({
+        user_id: currentUser.id,
+        online_at: new Date().toISOString(),
+        presence_status: newStatus
+      });
+    } else {
+      await presenceChannel.untrack();
+    }
+  } catch(e) {}
+}
+
+function _setDotState(dot, status) {
   if (!dot) return;
   dot.classList.remove('online', 'away', 'offline');
-  dot.classList.add(status === 'online' ? 'online' : status === 'away' ? 'away' : 'offline');
+  if (status === 'online') dot.classList.add('online');
+  else if (status === 'away') dot.classList.add('away');
+  else dot.classList.add('offline');
 }
 
 function updatePresenceDots() {
+  // Update active chat topbar dot
   if (activeDmId) {
-    const s = onlineUsers.get(activeDmId) || 'offline';
-    _applyDot(document.getElementById('dmPresenceDot'), s);
-    _applyDot(document.getElementById('dmFsPresenceDot'), s);
+    const s = presenceMap.get(activeDmId) || 'offline';
+    _setDotState(document.getElementById('dmPresenceDot'), s);
+    _setDotState(document.getElementById('dmFsPresenceDot'), s);
   }
+  // Update all DM conv list presence dots (both desktop + mobile FS list)
   document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
-    const s = onlineUsers.get(dot.dataset.presenceUser);
+    const userId = dot.dataset.presenceUser;
+    const s = presenceMap.get(userId) || 'offline';
     dot.classList.remove('online', 'away');
     if (s === 'online') dot.classList.add('online');
     else if (s === 'away') dot.classList.add('away');
   });
 }
 
-// Clears ALL presence dots — topbar AND every conv-list dot
 function resetPresenceDots() {
-  _applyDot(document.getElementById('dmPresenceDot'), 'offline');
-  _applyDot(document.getElementById('dmFsPresenceDot'), 'offline');
-  document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
-    dot.classList.remove('online', 'away');
+  ['dmPresenceDot', 'dmFsPresenceDot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('online', 'away'); el.classList.add('offline'); }
   });
 }
 
@@ -4527,17 +4438,11 @@ function _dismissAdminOverlay() {
 
 // Public close — called by Cancel button, ESC, clicking outside, browser events.
 // Always wipes auth so admin panel can never reopen without the key.
-// If the DM panel is already open (dmOpen=true), performs a full closeDM()
-// so presence is torn down, channel cleaned up, and offline is broadcast instantly.
 function closeAdminPopup() {
   _adminSessionValid = false;
   adminAuthenticated = false;
   document.getElementById('dmProfileTab')?.classList.remove('show');
   _dismissAdminOverlay();
-  // If DM is open, do a full proper close (tears down presence, channels, flags)
-  if (dmOpen) {
-    closeDM();
-  }
 }
 
 function openAdminPopup() {
@@ -4887,14 +4792,12 @@ async function openDM() {
 }
 
 async function closeDM() {
-  if (!dmOpen) return; // guard against double-close (e.g. closeAdminPopup -> closeDM -> closeDM)
   dmOpen = false;
   // Wipe auth flags unconditionally — no path should leave these true after close
   adminAuthenticated = false;
   _adminSessionValid = false;
-  // Dismiss admin overlay UI if it was open simultaneously
+  // Also dismiss the admin overlay UI in case it was open simultaneously
   _dismissAdminOverlay();
-  // Broadcast offline instantly via presence channel before teardown
   await leavePresence();
   activeDmId = null;
   document.getElementById('dmOverlay').classList.remove('show');
@@ -4965,14 +4868,14 @@ function buildDMConvList() {
         : DEFAULT_AVATAR_SVG;
       const avatarBg = c.avatarUrl ? 'transparent' : '#e8e8ec';
 
-      const _ps = onlineUsers.get(c.id);
-      const _psCls = _ps === 'online' ? ' online' : _ps === 'away' ? ' away' : '';
+      const _presStatus = presenceMap.get(c.id);
+      const _presClass = _presStatus === 'online' ? ' online' : _presStatus === 'away' ? ' away' : '';
       item.innerHTML = `
         <div class="dm-conv-avatar-wrap">
           <div class="dm-conv-avatar default-avatar" style="background:${avatarBg};overflow:hidden;position:relative;">
             ${avatarInner}
           </div>
-          <div class="dm-conv-presence-dot${_psCls}" data-presence-user="${c.id}"></div>
+          <div class="dm-conv-presence-dot${_presClass}" data-presence-user="${c.id}"></div>
         </div>
         <div class="dm-conv-info">
           <div class="dm-conv-name">${escHtml(c.name)}</div>
@@ -5078,8 +4981,6 @@ async function openDesktopChat(id) {
 
   resetPresenceDots();
   updatePresenceDots();
-  // Subscribe to this user's personal offline channel for instant dot removal
-  _subscribeToUserOffline(id);
   document.getElementById('dmEmptyState').style.display = 'none';
   document.getElementById('dmActiveChatWrap').style.display = 'flex';
 
@@ -6271,8 +6172,6 @@ async function openFsChat(id) {
     fsUsernameEl.textContent = real;
   }
   resetPresenceDots(); updatePresenceDots();
-  // Subscribe to this user's personal offline channel for instant dot removal
-  _subscribeToUserOffline(id);
   const msgsEl = document.getElementById('dmFsMessages');
   showSkeletonMessages(msgsEl);
   const { data: { user } } = await supabaseClient.auth.getUser();
@@ -8887,107 +8786,34 @@ function _isAdminPanelOpen() {
 function _ghostTrigger() {
   if (!_ghostModeEnabled) return;
   if (!_isAdminPanelOpen()) return;
-  // Full close — closeAdminPopup wipes flags; if dmOpen it also calls closeDM()
-  // which broadcasts offline instantly and tears down all channels.
+  // Full close — same as user pressing Cancel on admin popup
   closeAdminPopup();
-  // closeDM is idempotent (has dmOpen guard), safe to call directly too
-  // in case the DM panel was open but adminOverlay was not
   if (typeof closeDM === 'function') closeDM();
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     _ghostTrigger();
+    _updateMyPresenceTrack();
   } else if (document.visibilityState === 'visible' && activeDmId) {
     markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
+    _updateMyPresenceTrack();
   }
 });
 
-window.addEventListener('blur', () => { _ghostTrigger(); });
+window.addEventListener('blur', () => {
+  _ghostTrigger();
+  _updateMyPresenceTrack();
+});
 
 window.addEventListener('focus', () => {
   if (activeDmId) {
     markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
   }
+  _updateMyPresenceTrack();
 });
-
-// ── MOBILE KEYBOARD FIXES ──
-(function () {
-  if (!window.visualViewport) return;
-
-  var vv = window.visualViewport;
-  var lastKbHeight = 0;
-
-  // --- FIX A: hide bottom nav while keyboard is open ---
-  function _syncBottomNav(kbHeight) {
-    var nav = document.getElementById('mobileBottomNav');
-    if (!nav) return;
-    if (kbHeight > 80) {
-      nav.style.display = 'none';
-    } else {
-      nav.style.display = '';
-    }
-  }
-
-  // --- FIX B: dm-fullscreen (u2u chat) ---
-  // Header stays fixed at top; the whole chat (header + messages + input)
-  // is pinned to the visual viewport so it lifts WITH the keyboard.
-  function _syncDmFullscreen(kbHeight) {
-    var fs = document.getElementById('dmFullscreen');
-    if (!fs || !fs.classList.contains('show')) return;
-    // Pin top to visible area top; let bottom reach screen bottom so no gap shows
-    // during the brief delay between keyboard open and visualViewport firing.
-    // The ::after pseudo-element also covers any residual gap below.
-    fs.style.height = vv.height + 'px';
-    fs.style.top    = vv.offsetTop + 'px';
-    fs.style.bottom = 'auto';
-    // When keyboard opens, scroll messages to bottom so latest msg stays visible
-    if (kbHeight > 80) {
-      var msgs = document.getElementById('dmFsMessages');
-      if (msgs) {
-        requestAnimationFrame(function () { msgs.scrollTop = msgs.scrollHeight; });
-      }
-    }
-  }
-
-  function _resetDmFullscreen(fs) {
-    fs.style.height = '';
-    fs.style.top    = '';
-    fs.style.bottom = '';
-  }
-
-  function _onViewportChange() {
-    var kbHeight = window.innerHeight - vv.height;
-    lastKbHeight = kbHeight;
-    _syncBottomNav(kbHeight);
-    _syncDmFullscreen(kbHeight);
-  }
-
-  vv.addEventListener('resize', _onViewportChange);
-  vv.addEventListener('scroll', _onViewportChange);
-
-  // Reset dm-fullscreen size when panel closes
-  var _fsObserver = new MutationObserver(function () {
-    var fs = document.getElementById('dmFullscreen');
-    if (!fs) return;
-    if (fs.classList.contains('show')) {
-      _syncDmFullscreen(lastKbHeight);
-    } else {
-      _resetDmFullscreen(fs);
-    }
-  });
-  function _startFsObserver() {
-    var fs = document.getElementById('dmFullscreen');
-    if (fs) {
-      _fsObserver.observe(fs, { attributes: true, attributeFilter: ['class'] });
-    } else {
-      setTimeout(_startFsObserver, 300);
-    }
-  }
-  _startFsObserver();
-})();
 
 async function loadGhostMode() {
   try {
@@ -9012,22 +8838,7 @@ async function toggleGhostMode() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
     await supabaseClient.from('profiles').update({ ghost_mode: _ghostModeEnabled }).eq('id', user.id);
-    // Re-sync presence: if ghost turned on, force-broadcast online (drop any blue dot).
-    // If ghost turned off, re-join so away state can now be broadcast normally.
-    if (dmOpen) {
-      if (_ghostModeEnabled) {
-        // Just re-track as online to clear any lingering away/blue dot
-        if (presenceChannel) {
-          _myPresenceStatus = 'online';
-          presenceChannel.track({ user_id: currentUser.id, status: 'online', online_at: new Date().toISOString() }).catch(() => {});
-        } else {
-          await joinPresence(); // wasn't in channel yet, join now
-        }
-      } else {
-        // Ghost off: re-join fresh so away can now broadcast correctly
-        await joinPresence();
-      }
-    }
+    await _updateMyPresenceTrack();
   } catch(e) {
     // Revert on failure
     _ghostModeEnabled = !_ghostModeEnabled;
