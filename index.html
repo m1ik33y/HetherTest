@@ -3433,7 +3433,7 @@ function _computeMyStatus() {
   return 'online';
 }
 
-// Push our current status to the presence channel.
+// Push our current status to the presence channel + our personal broadcast channel.
 // Ghost mode: only suppress 'away' — green still shows when focused.
 function _broadcastPresence() {
   if (!presenceChannel || !currentUser || !dmOpen) return;
@@ -3441,10 +3441,18 @@ function _broadcastPresence() {
   if (_ghostModeEnabled && status === 'away') return; // ghost: no blue dot
   if (_myPresenceStatus === status) return;           // no change, skip
   _myPresenceStatus = status;
+  // Presence track — syncs state across all clients on shared channel
   presenceChannel.track({
     user_id: currentUser.id,
     status,
     online_at: new Date().toISOString()
+  }).catch(() => {});
+  // Also broadcast on our personal channel so the other user's listener
+  // picks up online/away changes instantly
+  presenceChannel.send({
+    type: 'broadcast',
+    event: 'status',
+    payload: { user_id: currentUser.id, status }
   }).catch(() => {});
 }
 
@@ -3452,6 +3460,41 @@ function _broadcastPresence() {
 document.addEventListener('visibilitychange', _broadcastPresence);
 window.addEventListener('focus', _broadcastPresence);
 window.addEventListener('blur', _broadcastPresence);
+
+// Personal offline channels: each user subscribes to a channel named after
+// the OTHER user's ID. When someone closes the panel they broadcast on their
+// own personal channel → the other side hears it instantly regardless of
+// shared-channel timing issues.
+let _personalOfflineChannel = null; // listens for the other user going offline
+
+async function _subscribeToUserOffline(targetUserId) {
+  if (_personalOfflineChannel) {
+    try { await supabaseClient.removeChannel(_personalOfflineChannel); } catch(e) {}
+    _personalOfflineChannel = null;
+  }
+  if (!targetUserId) return;
+  _personalOfflineChannel = supabaseClient.channel('hether-offline:' + targetUserId, {
+    config: { broadcast: { ack: false } }
+  });
+  _personalOfflineChannel
+    .on('broadcast', { event: 'offline' }, ({ payload }) => {
+      const uid = payload?.user_id;
+      if (uid) { onlineUsers.delete(uid); updatePresenceDots(); }
+    })
+    .on('broadcast', { event: 'status' }, ({ payload }) => {
+      const uid = payload?.user_id;
+      const s   = payload?.status;
+      if (uid && s) { onlineUsers.set(uid, s); updatePresenceDots(); }
+    })
+    .subscribe();
+}
+
+async function _unsubscribeFromUserOffline() {
+  if (_personalOfflineChannel) {
+    try { await supabaseClient.removeChannel(_personalOfflineChannel); } catch(e) {}
+    _personalOfflineChannel = null;
+  }
+}
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -3466,18 +3509,13 @@ async function joinPresence() {
   if (_ghostModeEnabled && _myPresenceStatus === 'away') _myPresenceStatus = 'online';
 
   presenceChannel = supabaseClient.channel('hether-presence', {
-    config: { presence: { key: currentUser.id } }
+    config: {
+      presence: { key: currentUser.id },
+      broadcast: { ack: true }
+    }
   });
 
   presenceChannel
-    // ── Broadcast: instant offline signal sent by the leaving user ──
-    .on('broadcast', { event: 'offline' }, ({ payload }) => {
-      const uid = payload?.user_id;
-      if (uid) {
-        onlineUsers.delete(uid);
-        updatePresenceDots();
-      }
-    })
     // ── Presence sync: fires on subscribe and whenever state changes ──
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
@@ -3495,7 +3533,7 @@ async function joinPresence() {
       updatePresenceDots();
     })
     .on('presence', { event: 'leave' }, ({ key }) => {
-      // Fallback — also fires if the user's connection drops without a clean leave
+      // Fires when heartbeat times out — fallback for unclean disconnects
       onlineUsers.delete(key);
       updatePresenceDots();
     })
@@ -3508,24 +3546,42 @@ async function joinPresence() {
         });
       }
     });
+
+  // Also subscribe to the current chat partner's personal offline channel
+  if (activeDmId) await _subscribeToUserOffline(activeDmId);
 }
 
 async function leavePresence() {
   if (presenceChannel && currentUser) {
+    const dyingChannel = presenceChannel;
+    presenceChannel = null;
     try {
-      // Step 1: broadcast instant offline signal — arrives at other clients
-      // before we even untrack, so their dot disappears immediately
-      await presenceChannel.send({
-        type: 'broadcast',
-        event: 'offline',
-        payload: { user_id: currentUser.id }
+      // Broadcast on our personal channel — the other user is subscribed to it
+      // and hears this instantly before any heartbeat timeout.
+      const myPersonalChannel = supabaseClient.channel('hether-offline:' + currentUser.id, {
+        config: { broadcast: { ack: false } }
+      });
+      await new Promise(resolve => {
+        myPersonalChannel.subscribe(async (s) => {
+          if (s === 'SUBSCRIBED') {
+            await myPersonalChannel.send({
+              type: 'broadcast',
+              event: 'offline',
+              payload: { user_id: currentUser.id }
+            }).catch(() => {});
+            await new Promise(r => setTimeout(r, 60));
+            await supabaseClient.removeChannel(myPersonalChannel).catch(() => {});
+            resolve();
+          }
+        });
+        setTimeout(resolve, 800); // safety timeout
       });
     } catch(e) {}
-    try { await presenceChannel.untrack(); } catch(e) {}
-    try { await supabaseClient.removeChannel(presenceChannel); } catch(e) {}
-    presenceChannel = null;
+    try { await dyingChannel.untrack(); } catch(e) {}
+    try { await supabaseClient.removeChannel(dyingChannel); } catch(e) {}
   }
-  _myPresenceStatus = 'online'; // reset for next join
+  await _unsubscribeFromUserOffline();
+  _myPresenceStatus = 'online';
   onlineUsers.clear();
   updatePresenceDots();
 }
@@ -5022,6 +5078,8 @@ async function openDesktopChat(id) {
 
   resetPresenceDots();
   updatePresenceDots();
+  // Subscribe to this user's personal offline channel for instant dot removal
+  _subscribeToUserOffline(id);
   document.getElementById('dmEmptyState').style.display = 'none';
   document.getElementById('dmActiveChatWrap').style.display = 'flex';
 
@@ -6213,6 +6271,8 @@ async function openFsChat(id) {
     fsUsernameEl.textContent = real;
   }
   resetPresenceDots(); updatePresenceDots();
+  // Subscribe to this user's personal offline channel for instant dot removal
+  _subscribeToUserOffline(id);
   const msgsEl = document.getElementById('dmFsMessages');
   showSkeletonMessages(msgsEl);
   const { data: { user } } = await supabaseClient.auth.getUser();
