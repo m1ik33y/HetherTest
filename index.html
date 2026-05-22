@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="faviconl.png">
   <link rel="icon" type="image/png" href="faviconl.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Hether - Coding Platform </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -716,10 +716,6 @@ body {
   display: block;
   background: #22c55e;
 }
-.dm-presence-dot.inactive {
-  display: block;
-  background: #3b82f6;
-}
 .dm-presence-dot.offline {
   display: none;
 }
@@ -1281,10 +1277,8 @@ body {
   border: 2px solid var(--surface);
   display: none;
   z-index: 2;
-  transition: background 0.3s ease;
 }
-.dm-conv-presence-dot.online { display: block; background: #22c55e; }
-.dm-conv-presence-dot.inactive { display: block; background: #3b82f6; }
+.dm-conv-presence-dot.online { display: block; }
 
 .dm-conv-info { flex: 1; min-width: 0; }
 .dm-conv-name { font-size: 13.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1783,9 +1777,13 @@ body {
 /* ── FULLSCREEN DM (mobile) ── */
 .dm-fullscreen {
   display: none;
-  position: fixed; inset: 0; z-index: 400;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 400;
   flex-direction: column;
   background: var(--surface);
+  /* height is set by JS via visualViewport so keyboard doesn't push header */
+  height: 100dvh;
 }
 .dm-fs-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
@@ -2065,7 +2063,7 @@ body {
     padding: 8px 10px;
     padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 20px)));
   }
-  .dm-fullscreen { height: 100dvh; }
+  /* dm-fullscreen height is managed by JS visualViewport to prevent header scroll on keyboard open */
   .sidebar-spacer { flex: 1; min-height: 8px; }
 }
 
@@ -3403,7 +3401,6 @@ const subscriptionManager = {
 // ── PRESENCE SYSTEM ──
 let presenceChannel = null;
 let onlineUsers = new Set();
-let inactiveUsers = new Set(); // online but tab not focused (ghost mode off only)
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -3420,34 +3417,16 @@ async function joinPresence() {
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
       onlineUsers.clear();
-      inactiveUsers.clear();
-      Object.entries(state).forEach(([key, presences]) => {
-        onlineUsers.add(key);
-        const allInactive = presences.every(p => p.status === 'inactive');
-        if (allInactive) inactiveUsers.add(key);
-      });
+      Object.keys(state).forEach(key => { onlineUsers.add(key); });
       updatePresenceDots();
     })
-    .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      onlineUsers.add(key);
-      const allInactive = newPresences.every(p => p.status === 'inactive');
-      if (allInactive) inactiveUsers.add(key); else inactiveUsers.delete(key);
-      updatePresenceDots();
-    })
-    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); inactiveUsers.delete(key); updatePresenceDots(); })
+    .on('presence', { event: 'join' }, ({ key }) => { onlineUsers.add(key); updatePresenceDots(); })
+    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); updatePresenceDots(); })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString(), status: 'active' });
+        await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
       }
     });
-}
-
-// Re-track self with a new status (active/inactive) without leaving presence
-async function _retrackPresence(newStatus) {
-  if (!presenceChannel || !currentUser) return;
-  try {
-    await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString(), status: newStatus });
-  } catch(e) {}
 }
 
 async function leavePresence() {
@@ -3461,28 +3440,18 @@ async function leavePresence() {
 }
 
 function updatePresenceDots() {
-  // Determine a user's visual dot state: 'online' | 'inactive' | 'offline'
-  function _dotState(userId) {
-    if (!onlineUsers.has(userId)) return 'offline';
-    if (inactiveUsers.has(userId)) return 'inactive';
-    return 'online';
-  }
-  function _applyDotState(dot, state) {
-    dot.classList.toggle('online',   state === 'online');
-    dot.classList.toggle('inactive', state === 'inactive');
-    dot.classList.toggle('offline',  state === 'offline');
-  }
   // Update active chat topbar dot
   if (activeDmId) {
-    const state = _dotState(activeDmId);
+    const isOnline = onlineUsers.has(activeDmId);
     const dot = document.getElementById('dmPresenceDot');
-    if (dot) _applyDotState(dot, state);
+    if (dot) { dot.classList.toggle('online', isOnline); dot.classList.toggle('offline', !isOnline); }
     const fsDot = document.getElementById('dmFsPresenceDot');
-    if (fsDot) _applyDotState(fsDot, state);
+    if (fsDot) { fsDot.classList.toggle('online', isOnline); fsDot.classList.toggle('offline', !isOnline); }
   }
   // Update all DM conv list presence dots (both desktop + mobile FS list)
   document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
-    _applyDotState(dot, _dotState(dot.dataset.presenceUser));
+    const userId = dot.dataset.presenceUser;
+    dot.classList.toggle('online', onlineUsers.has(userId));
   });
 }
 
@@ -8760,30 +8729,83 @@ function _ghostTrigger() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     _ghostTrigger();
-    // When ghost mode is OFF, signal inactive instead of closing
-    if (!_ghostModeEnabled) _retrackPresence('inactive');
-  } else if (document.visibilityState === 'visible') {
-    if (!_ghostModeEnabled) _retrackPresence('active');
-    if (activeDmId) {
-      markConversationSeen(activeDmId);
-      if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
-    }
+  } else if (document.visibilityState === 'visible' && activeDmId) {
+    markConversationSeen(activeDmId);
+    if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
   }
 });
 
-window.addEventListener('blur', () => {
-  _ghostTrigger();
-  // When ghost mode is OFF, signal inactive instead of closing
-  if (!_ghostModeEnabled) _retrackPresence('inactive');
-});
+window.addEventListener('blur', () => { _ghostTrigger(); });
 
 window.addEventListener('focus', () => {
-  if (!_ghostModeEnabled) _retrackPresence('active');
   if (activeDmId) {
     markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
   }
 });
+
+// ── MOBILE KEYBOARD: keep dm-fullscreen header fixed ──
+// When the soft keyboard opens on mobile, the visual viewport shrinks.
+// We listen to visualViewport resize and pin the fullscreen panel's height
+// to the visible area so only the message list scrolls — the header never moves.
+(function() {
+  if (!window.visualViewport) return; // desktop / old browsers — not needed
+
+  const FS_ID = 'dmFullscreen';
+
+  function _applyViewport() {
+    const el = document.getElementById(FS_ID);
+    if (!el || !el.classList.contains('show')) return;
+    // Use the actual visible height (shrinks when keyboard is open)
+    const vh = window.visualViewport.height;
+    const offsetTop = window.visualViewport.offsetTop;
+    el.style.height = vh + 'px';
+    el.style.top    = offsetTop + 'px';
+  }
+
+  function _resetViewport() {
+    const el = document.getElementById(FS_ID);
+    if (!el) return;
+    el.style.height = '';
+    el.style.top    = '';
+  }
+
+  function _applyViewportAndScroll() {
+    _applyViewport();
+    // Keep messages scrolled to bottom when keyboard pushes viewport up
+    const msgs = document.getElementById('dmFsMessages');
+    if (msgs) {
+      const distFromBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight;
+      if (distFromBottom < 120) {
+        requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+      }
+    }
+  }
+
+  window.visualViewport.addEventListener('resize', _applyViewportAndScroll);
+  window.visualViewport.addEventListener('scroll', _applyViewport);
+
+  // Also call when the panel opens/closes — hook openDM / closeDM via MutationObserver
+  const _vpObserver = new MutationObserver(() => {
+    const el = document.getElementById(FS_ID);
+    if (el && el.classList.contains('show')) {
+      _applyViewport();
+    } else {
+      _resetViewport();
+    }
+  });
+
+  // Start observing once DOM is ready
+  function _startVpObserver() {
+    const el = document.getElementById(FS_ID);
+    if (el) {
+      _vpObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+    } else {
+      setTimeout(_startVpObserver, 300);
+    }
+  }
+  _startVpObserver();
+})();
 
 async function loadGhostMode() {
   try {
