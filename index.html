@@ -2083,6 +2083,10 @@ body {
   .sidebar-spacer { flex: 1; min-height: 8px; }
 }
 
+  /* Hide bottom nav when DM fullscreen chat is open — it lifts with keyboard otherwise */
+  .dm-fullscreen.show ~ .mobile-bottom-nav,
+  body:has(.dm-fullscreen.show) .mobile-bottom-nav { display: none !important; }
+
 @media (min-width: 641px) {
   .dm-fullscreen { display: none !important; }
 }
