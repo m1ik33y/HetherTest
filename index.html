@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="faviconl.png">
   <link rel="icon" type="image/png" href="faviconl.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hether - Coding Platform </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -1782,8 +1782,7 @@ body {
   z-index: 400;
   flex-direction: column;
   background: var(--surface);
-  /* dvh shrinks with the keyboard so input stays above it, no white gap */
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
 }
 .dm-fs-header {
@@ -9079,26 +9078,57 @@ function mobRenderThemePicker() {
 </nav>
 
 <script>
-// ── MOBILE KEYBOARD: scroll messages to bottom when keyboard opens ──
-// Layout is handled purely by CSS (dvh + flexbox). This just keeps
-// messages scrolled to the bottom when the keyboard appears/disappears.
+// ── MOBILE KEYBOARD: resize only the DM fullscreen chat, leave bottom nav alone ──
+// We do NOT use interactive-widget=resizes-content (that lifts all fixed elements).
+// Instead we use visualViewport to manually track keyboard height and adjust
+// only the dm-fullscreen container.
 (function() {
-  function scrollMessagesToBottom() {
+  function getDmFs() { return document.getElementById('dmFullscreen'); }
+  function getChatView() { return document.getElementById('dmFsChatView'); }
+
+  function applyLayout() {
+    const fs = getDmFs();
+    if (!fs || !fs.classList.contains('show')) return;
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    // Position and size the fullscreen container to exactly the visual viewport
+    // This keeps it above the keyboard without affecting anything else
+    fs.style.top = vv.offsetTop + 'px';
+    fs.style.height = vv.height + 'px';
+
+    // Scroll messages to bottom when keyboard opens
     const msgs = document.getElementById('dmFsMessages');
     if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
-  // When keyboard opens (visualViewport shrinks), scroll to bottom
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scrollMessagesToBottom);
+  function resetLayout() {
+    const fs = getDmFs();
+    if (!fs) return;
+    fs.style.top = '';
+    fs.style.height = '';
   }
 
-  // Also scroll to bottom when input is focused
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', applyLayout);
+    window.visualViewport.addEventListener('scroll', applyLayout);
+  }
+
+  // Re-apply when DM opens
   document.addEventListener('focusin', function(e) {
     if (e.target && e.target.id === 'dmFsInput') {
-      setTimeout(scrollMessagesToBottom, 300);
+      setTimeout(applyLayout, 300);
     }
   });
+  document.addEventListener('focusout', function(e) {
+    if (e.target && e.target.id === 'dmFsInput') {
+      setTimeout(resetLayout, 100);
+    }
+  });
+
+  // Expose so openFsChat can trigger it
+  window._dmApplyKeyboardLayout = applyLayout;
 })();
 </script>
 
