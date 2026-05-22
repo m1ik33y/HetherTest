@@ -1285,7 +1285,7 @@ body {
   z-index: 2;
 }
 .dm-conv-presence-dot.online { display: block; background: #22c55e; }
-.dm-conv-presence-dot.away { display: block; background: #3b82f6; }
+.dm-conv-presence-dot.away   { display: block; background: #3b82f6; }
 
 .dm-conv-info { flex: 1; min-width: 0; }
 .dm-conv-name { font-size: 13.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3417,26 +3417,23 @@ const subscriptionManager = {
 
 // ── PRESENCE SYSTEM ──
 let presenceChannel = null;
-// Map of userId -> 'online' | 'away'
-let onlineUsers = new Map();
+let onlineUsers = new Map(); // userId -> 'online' | 'away'
 let _myPresenceStatus = 'online';
 
-// Detect tab/window focus changes and broadcast away status.
-// We use ONLY visibilitychange — window.blur fires on too many false positives
-// (clicking address bar, devtools, any iframe) and causes permanent blue dots.
-(function setupAwayDetection() {
-  document.addEventListener('visibilitychange', () => {
-    if (!presenceChannel || !currentUser || !dmOpen) return;
-    const status = document.hidden ? 'away' : 'online';
-    if (_myPresenceStatus === status) return;
-    _myPresenceStatus = status;
-    presenceChannel.track({
-      user_id: currentUser.id,
-      status: status,
-      online_at: new Date().toISOString()
-    }).catch(() => {});
-  });
-})();
+// Track tab visibility and broadcast away/online status.
+// Only visibilitychange is used — window.blur fires on too many false positives
+// (address bar, devtools, iframes) and causes stuck blue dots.
+document.addEventListener('visibilitychange', () => {
+  if (!presenceChannel || !currentUser || !dmOpen) return;
+  const status = document.hidden ? 'away' : 'online';
+  if (_myPresenceStatus === status) return;
+  _myPresenceStatus = status;
+  presenceChannel.track({
+    user_id: currentUser.id,
+    status,
+    online_at: new Date().toISOString()
+  }).catch(() => {});
+});
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -3456,7 +3453,6 @@ async function joinPresence() {
       const state = presenceChannel.presenceState();
       onlineUsers.clear();
       Object.keys(state).forEach(key => {
-        // presenceState returns array of metas per key; take latest
         const metas = state[key];
         const meta = metas[metas.length - 1];
         onlineUsers.set(key, meta.status || 'online');
@@ -3468,7 +3464,10 @@ async function joinPresence() {
       onlineUsers.set(key, meta.status || 'online');
       updatePresenceDots();
     })
-    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); updatePresenceDots(); })
+    .on('presence', { event: 'leave' }, ({ key }) => {
+      onlineUsers.delete(key);
+      updatePresenceDots();
+    })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await presenceChannel.track({
@@ -3481,7 +3480,7 @@ async function joinPresence() {
 }
 
 async function leavePresence() {
-  _myPresenceStatus = 'online'; // always reset so next join starts fresh
+  _myPresenceStatus = 'online'; // reset so next join always starts fresh as online
   if (presenceChannel) {
     try { await presenceChannel.untrack(); } catch(e) {}
     await supabaseClient.removeChannel(presenceChannel);
@@ -3491,35 +3490,32 @@ async function leavePresence() {
   updatePresenceDots();
 }
 
-function _applyPresenceDot(dot, userId) {
+function _applyDot(dot, status) {
   if (!dot) return;
-  const status = onlineUsers.get(userId); // undefined = offline
   dot.classList.remove('online', 'away', 'offline');
-  if (status === 'online') dot.classList.add('online');
-  else if (status === 'away') dot.classList.add('away');
-  else dot.classList.add('offline');
+  dot.classList.add(status === 'online' ? 'online' : status === 'away' ? 'away' : 'offline');
 }
 
 function updatePresenceDots() {
-  // Update active chat topbar dot
   if (activeDmId) {
-    _applyPresenceDot(document.getElementById('dmPresenceDot'), activeDmId);
-    _applyPresenceDot(document.getElementById('dmFsPresenceDot'), activeDmId);
+    const s = onlineUsers.get(activeDmId) || 'offline';
+    _applyDot(document.getElementById('dmPresenceDot'), s);
+    _applyDot(document.getElementById('dmFsPresenceDot'), s);
   }
-  // Update all DM conv list presence dots (both desktop + mobile FS list)
   document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
-    const userId = dot.dataset.presenceUser;
-    const status = onlineUsers.get(userId);
+    const s = onlineUsers.get(dot.dataset.presenceUser);
     dot.classList.remove('online', 'away');
-    if (status === 'online') dot.classList.add('online');
-    else if (status === 'away') dot.classList.add('away');
+    if (s === 'online') dot.classList.add('online');
+    else if (s === 'away') dot.classList.add('away');
   });
 }
 
+// Clears ALL presence dots — topbar AND every conv-list dot
 function resetPresenceDots() {
-  ['dmPresenceDot', 'dmFsPresenceDot'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.classList.remove('online', 'away'); el.classList.add('offline'); }
+  _applyDot(document.getElementById('dmPresenceDot'), 'offline');
+  _applyDot(document.getElementById('dmFsPresenceDot'), 'offline');
+  document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
+    dot.classList.remove('online', 'away');
   });
 }
 
@@ -4865,14 +4861,14 @@ function buildDMConvList() {
         : DEFAULT_AVATAR_SVG;
       const avatarBg = c.avatarUrl ? 'transparent' : '#e8e8ec';
 
-      const _presenceStatus = onlineUsers.get(c.id); // 'online' | 'away' | undefined
-      const _presenceCls = _presenceStatus === 'online' ? ' online' : _presenceStatus === 'away' ? ' away' : '';
+      const _ps = onlineUsers.get(c.id);
+      const _psCls = _ps === 'online' ? ' online' : _ps === 'away' ? ' away' : '';
       item.innerHTML = `
         <div class="dm-conv-avatar-wrap">
           <div class="dm-conv-avatar default-avatar" style="background:${avatarBg};overflow:hidden;position:relative;">
             ${avatarInner}
           </div>
-          <div class="dm-conv-presence-dot${_presenceCls}" data-presence-user="${c.id}"></div>
+          <div class="dm-conv-presence-dot${_psCls}" data-presence-user="${c.id}"></div>
         </div>
         <div class="dm-conv-info">
           <div class="dm-conv-name">${escHtml(c.name)}</div>
