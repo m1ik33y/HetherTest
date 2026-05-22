@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="faviconl.png">
   <link rel="icon" type="image/png" href="faviconl.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Hether - Coding Platform </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -1777,18 +1777,22 @@ body {
 /* ── FULLSCREEN DM (mobile) ── */
 .dm-fullscreen {
   display: none;
-  position: fixed; inset: 0; z-index: 400;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 400;
   flex-direction: column;
   background: var(--surface);
-  /* Use 100% of the fixed viewport — not dvh — so keyboard doesn't shrink the container */
-  height: 100%;
+  /* dvh shrinks with the keyboard so input stays above it, no white gap */
+  height: 100dvh;
   overflow: hidden;
 }
 .dm-fs-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px; background: var(--surface); flex-shrink: 0;
-  /* Always stay pinned at the top, unaffected by keyboard */
+  /* Truly fixed to top — never moves with scroll or keyboard */
   position: sticky; top: 0; z-index: 10;
+  /* Prevent any touch-scroll from moving it */
+  touch-action: none;
 }
 .dm-fs-back {
   background: transparent; border: none; cursor: pointer; color: var(--text2);
@@ -1811,8 +1815,19 @@ body {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   padding: 14px 14px; display: flex; flex-direction: column; gap: 2px;
   min-height: 0;
+  /* Prevent bounce/rubber-band scroll from causing layout issues */
+  overscroll-behavior: contain;
 }
-.dm-fs-input-area { padding: 10px 12px 14px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+.dm-fs-input-area { 
+  padding: 10px 12px 14px; 
+  padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
+  background: var(--surface); 
+  border-top: 1px solid var(--border); 
+  flex-shrink: 0;
+  /* Never scroll, never bounce */
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
 .dm-fs-input-row { display: flex; gap: 6px; align-items: flex-end; background: var(--input-bg); border: 1px solid var(--border); border-radius: 22px; padding: 6px 8px 6px 6px; }
 #dmFsInput {
   flex: 1; background: transparent; border: none; outline: none;
@@ -2062,10 +2077,9 @@ body {
   .dm-msg-group-row { max-width: 85%; }
   .dm-fs-input-area {
     padding: 8px 10px;
-    padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 20px)));
+    padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
   }
-  /* height is handled by position:fixed inset:0 — no dvh needed */
-  .dm-fullscreen { height: 100%; }
+  /* dvh handles keyboard resize — no height override needed */
   .sidebar-spacer { flex: 1; min-height: 8px; }
 }
 
@@ -3122,7 +3136,7 @@ body {
 
 <!-- ADMIN DM — MOBILE -->
 <div class="dm-fullscreen" id="dmFullscreen">
-  <div id="dmFsListView" style="display:flex;flex-direction:column;height:100%;">
+  <div id="dmFsListView" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;">
       <div style="font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;">
         Messages <span class="dm-secure-badge">SECURE</span>
@@ -3139,7 +3153,7 @@ body {
     <div class="dm-sidebar-load-bar" id="dmFsSidebarLoadBar"><div class="dm-load-bar-fill" id="dmFsSidebarLoadFill"></div></div>
     <div class="dm-conv-list" id="dmFsConvList" style="flex:1;overflow-y:auto;padding:8px;"></div>
   </div>
-  <div id="dmFsChatView" style="display:none;flex-direction:column;height:100%;">
+  <div id="dmFsChatView" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
     <div class="dm-fs-header">
       <button class="dm-fs-back" onclick="dmFsBack()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -9061,112 +9075,26 @@ function mobRenderThemePicker() {
 </nav>
 
 <script>
-// ── MOBILE KEYBOARD: keep DM header fixed, messages + input scroll with keyboard ──
+// ── MOBILE KEYBOARD: scroll messages to bottom when keyboard opens ──
+// Layout is handled purely by CSS (dvh + flexbox). This just keeps
+// messages scrolled to the bottom when the keyboard appears/disappears.
 (function() {
-  // The dm-fullscreen chat view we care about
-  function getDmChatView() {
-    return document.getElementById('dmFsChatView');
-  }
-  function getDmFullscreen() {
-    return document.getElementById('dmFullscreen');
+  function scrollMessagesToBottom() {
+    const msgs = document.getElementById('dmFsMessages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
-  function applyKeyboardLayout(viewportHeight) {
-    const fs = getDmFullscreen();
-    if (!fs || !fs.classList.contains('show')) return;
-    const chatView = getDmChatView();
-    if (!chatView || chatView.style.display === 'none') return;
-
-    // The header height (we read it live so it handles dynamic content)
-    const header = chatView.querySelector('.dm-fs-header');
-    if (!header) return;
-    const headerH = header.offsetHeight;
-
-    // Total screen height (fixed, never changes with keyboard)
-    const screenH = window.screen.height;
-
-    // How much keyboard is taking up = difference between screen and visual viewport
-    const keyboardH = Math.max(0, window.innerHeight - viewportHeight);
-
-    // chatView must fill from top to bottom of visual viewport
-    // Since .dm-fullscreen is position:fixed inset:0 (full screen height),
-    // we constrain chatView height to the visual viewport height
-    chatView.style.height = viewportHeight + 'px';
-
-    // Messages area fills the space between header and input area
-    const inputArea = chatView.querySelector('.dm-fs-input-area');
-    const replyBar = chatView.querySelector('.dm-reply-bar');
-    const editBar = chatView.querySelector('.dm-edit-bar');
-    const typingSlot = chatView.querySelector('#dmFsTypingSlot');
-    const mediaStaging = chatView.querySelector('.dm-fs-media-staging-wrap');
-    const loadBar = chatView.querySelector('.dm-chat-load-bar');
-
-    let reservedBottom = inputArea ? inputArea.offsetHeight : 56;
-    if (replyBar && replyBar.classList.contains('show')) reservedBottom += replyBar.offsetHeight;
-    if (editBar && editBar.classList.contains('show')) reservedBottom += editBar.offsetHeight;
-    if (typingSlot && typingSlot.style.display !== 'none') reservedBottom += typingSlot.offsetHeight;
-    if (mediaStaging && mediaStaging.classList.contains('show')) reservedBottom += mediaStaging.offsetHeight;
-    if (loadBar) reservedBottom += loadBar.offsetHeight;
-
-    const messagesEl = chatView.querySelector('.dm-fs-messages');
-    if (messagesEl) {
-      const availH = viewportHeight - headerH - reservedBottom;
-      messagesEl.style.height = Math.max(60, availH) + 'px';
-      messagesEl.style.flex = 'none';
-      // Keep scroll pinned to bottom when keyboard opens
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-  }
-
-  function resetLayout() {
-    const chatView = getDmChatView();
-    if (!chatView) return;
-    chatView.style.height = '';
-    const messagesEl = chatView.querySelector('.dm-fs-messages');
-    if (messagesEl) {
-      messagesEl.style.height = '';
-      messagesEl.style.flex = '';
-    }
-  }
-
-  // Use visualViewport API (supported on all modern mobile browsers)
+  // When keyboard opens (visualViewport shrinks), scroll to bottom
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', function() {
-      applyKeyboardLayout(window.visualViewport.height);
-    });
-    window.visualViewport.addEventListener('scroll', function() {
-      applyKeyboardLayout(window.visualViewport.height);
-    });
+    window.visualViewport.addEventListener('resize', scrollMessagesToBottom);
   }
 
-  // Also handle focus/blur on the input for browsers without visualViewport
+  // Also scroll to bottom when input is focused
   document.addEventListener('focusin', function(e) {
     if (e.target && e.target.id === 'dmFsInput') {
-      setTimeout(function() {
-        const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        applyKeyboardLayout(vvh);
-      }, 300);
+      setTimeout(scrollMessagesToBottom, 300);
     }
   });
-  document.addEventListener('focusout', function(e) {
-    if (e.target && e.target.id === 'dmFsInput') {
-      setTimeout(function() {
-        resetLayout();
-      }, 100);
-    }
-  });
-
-  // Re-apply when the DM chat view opens
-  const origOpenFsChat = window.openFsChat;
-  if (typeof origOpenFsChat === 'function') {
-    window.openFsChat = async function(id) {
-      await origOpenFsChat(id);
-      setTimeout(function() {
-        const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        applyKeyboardLayout(vvh);
-      }, 100);
-    };
-  }
 })();
 </script>
 
