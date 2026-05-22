@@ -1784,6 +1784,17 @@ body {
   flex-direction: column;
   background: var(--surface);
 }
+/* Covers the gap between the panel and the keyboard during the viewport resize delay */
+.dm-fullscreen::after {
+  content: '';
+  position: fixed;
+  left: 0; right: 0;
+  bottom: -200px; /* extend well past screen bottom */
+  height: 200px;
+  background: var(--surface);
+  pointer-events: none;
+  z-index: -1;
+}
 .dm-fs-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px; background: var(--surface); flex-shrink: 0;
@@ -8767,9 +8778,12 @@ window.addEventListener('focus', () => {
   function _syncDmFullscreen(kbHeight) {
     var fs = document.getElementById('dmFullscreen');
     if (!fs || !fs.classList.contains('show')) return;
-    // Pin the panel to exactly the visible area
+    // Pin top to visible area top; let bottom reach screen bottom so no gap shows
+    // during the brief delay between keyboard open and visualViewport firing.
+    // The ::after pseudo-element also covers any residual gap below.
     fs.style.height = vv.height + 'px';
     fs.style.top    = vv.offsetTop + 'px';
+    fs.style.bottom = 'auto';
     // When keyboard opens, scroll messages to bottom so latest msg stays visible
     if (kbHeight > 80) {
       var msgs = document.getElementById('dmFsMessages');
@@ -8777,6 +8791,12 @@ window.addEventListener('focus', () => {
         requestAnimationFrame(function () { msgs.scrollTop = msgs.scrollHeight; });
       }
     }
+  }
+
+  function _resetDmFullscreen(fs) {
+    fs.style.height = '';
+    fs.style.top    = '';
+    fs.style.bottom = '';
   }
 
   function _onViewportChange() {
@@ -8796,8 +8816,7 @@ window.addEventListener('focus', () => {
     if (fs.classList.contains('show')) {
       _syncDmFullscreen(lastKbHeight);
     } else {
-      fs.style.height = '';
-      fs.style.top    = '';
+      _resetDmFullscreen(fs);
     }
   });
   function _startFsObserver() {
