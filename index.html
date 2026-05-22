@@ -715,12 +715,6 @@ body {
 .dm-presence-dot.online {
   display: block;
   background: #22c55e;
-  box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
-}
-.dm-presence-dot.away {
-  display: block;
-  background: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
 }
 .dm-presence-dot.offline {
   display: none;
@@ -1013,27 +1007,27 @@ body {
   --dm-recv-color: var(--text);
 }
 
-/* Override bubble colors per theme */
-[data-chat-theme="default"] .dm-msg-group.sent .dm-bubble   { background: #495cea !important; color: #fff !important; }
-[data-chat-theme="default"] .dm-msg-group.received .dm-bubble { background: var(--surface2) !important; color: var(--text) !important; }
+/* Override bubble colors per theme — emoji-only bubbles are always transparent */
+[data-chat-theme="default"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #495cea !important; color: #fff !important; }
+[data-chat-theme="default"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: var(--surface2) !important; color: var(--text) !important; }
 
-[data-chat-theme="lovecore"] .dm-msg-group.sent .dm-bubble   { background: #e8265a !important; color: #fff !important; }
-[data-chat-theme="lovecore"] .dm-msg-group.received .dm-bubble { background: #ffd6e0 !important; color: #7a1030 !important; }
+[data-chat-theme="lovecore"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #e8265a !important; color: #fff !important; }
+[data-chat-theme="lovecore"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #ffd6e0 !important; color: #7a1030 !important; }
 
-[data-chat-theme="solarized"] .dm-msg-group.sent .dm-bubble   { background: #1a1a1a !important; color: #f0f0f0 !important; }
-[data-chat-theme="solarized"] .dm-msg-group.received .dm-bubble { background: #e8e8e8 !important; color: #1a1a1a !important; }
+[data-chat-theme="solarized"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #1a1a1a !important; color: #f0f0f0 !important; }
+[data-chat-theme="solarized"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #e8e8e8 !important; color: #1a1a1a !important; }
 
-[data-chat-theme="honey"] .dm-msg-group.sent .dm-bubble   { background: #e6a817 !important; color: #fff !important; }
-[data-chat-theme="honey"] .dm-msg-group.received .dm-bubble { background: #fff3c4 !important; color: #7a4f00 !important; }
+[data-chat-theme="honey"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #e6a817 !important; color: #fff !important; }
+[data-chat-theme="honey"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #fff3c4 !important; color: #7a4f00 !important; }
 
-[data-chat-theme="bluehaze"] .dm-msg-group.sent .dm-bubble   { background: #7ba7c2 !important; color: #fff !important; }
-[data-chat-theme="bluehaze"] .dm-msg-group.received .dm-bubble { background: #ddeaf4 !important; color: #2d4f6b !important; }
+[data-chat-theme="bluehaze"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #7ba7c2 !important; color: #fff !important; }
+[data-chat-theme="bluehaze"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #ddeaf4 !important; color: #2d4f6b !important; }
 
-[data-chat-theme="nightdrive"] .dm-msg-group.sent .dm-bubble   { background: #1a3a6e !important; color: #c8d8f8 !important; }
-[data-chat-theme="nightdrive"] .dm-msg-group.received .dm-bubble { background: #0d1f3c !important; color: #8aaee0 !important; }
+[data-chat-theme="nightdrive"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #1a3a6e !important; color: #c8d8f8 !important; }
+[data-chat-theme="nightdrive"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #0d1f3c !important; color: #8aaee0 !important; }
 
-[data-chat-theme="lagoon"] .dm-msg-group.sent .dm-bubble   { background: #e07c3a !important; color: #fff !important; }
-[data-chat-theme="lagoon"] .dm-msg-group.received .dm-bubble { background: #b2ede8 !important; color: #1a4f4a !important; }
+[data-chat-theme="lagoon"] .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only)   { background: #e07c3a !important; color: #fff !important; }
+[data-chat-theme="lagoon"] .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: #b2ede8 !important; color: #1a4f4a !important; }
 
 /* ── THEME PICKER BUTTON ── */
 .dm-theme-toggle-btn {
@@ -1283,10 +1277,8 @@ body {
   border: 2px solid var(--surface);
   display: none;
   z-index: 2;
-  transition: background 0.3s ease;
 }
-.dm-conv-presence-dot.online { display: block; background: #22c55e; }
-.dm-conv-presence-dot.away   { display: block; background: #3b82f6; }
+.dm-conv-presence-dot.online { display: block; }
 
 .dm-conv-info { flex: 1; min-width: 0; }
 .dm-conv-name { font-size: 13.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1545,9 +1537,9 @@ body {
   vertical-align: top;
   position: relative;
 }
-.dm-bubble:hover { opacity: 0.92; }
-.dm-msg-group.sent .dm-bubble { background:#495cea; color: #fff; }
-.dm-msg-group.received .dm-bubble { background: var(--surface2); color: var(--text); border: none; }
+.dm-bubble:not(.dm-bubble-emoji-only):hover { opacity: 0.92; }
+.dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only) { background:#495cea; color: #fff; }
+.dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: var(--surface2); color: var(--text); border: none; }
 
 /* ── INSTAGRAM/iMESSAGE-STYLE GROUPED BUBBLE CORNERS ── */
 /*
@@ -1792,6 +1784,9 @@ body {
 .dm-fs-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px; background: var(--surface); flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .dm-fs-back {
   background: transparent; border: none; cursor: pointer; color: var(--text2);
@@ -2067,7 +2062,21 @@ body {
     padding: 8px 10px;
     padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 20px)));
   }
-  .dm-fullscreen { height: 100dvh; }
+  .dm-fullscreen { 
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .dm-fs-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+  #dmFsChatView {
+    padding-top: 60px;
+  }
   .sidebar-spacer { flex: 1; min-height: 8px; }
 }
 
@@ -3404,10 +3413,7 @@ const subscriptionManager = {
 
 // ── PRESENCE SYSTEM ──
 let presenceChannel = null;
-// Map<userId, 'online'|'away'> — 'online'=green, 'away'=blue
-let presenceMap = new Map();
-// Keep backward-compat alias used elsewhere in the file
-const onlineUsers = { has: (id) => presenceMap.has(id) };
+let onlineUsers = new Set();
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -3423,26 +3429,15 @@ async function joinPresence() {
   presenceChannel
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
-      presenceMap.clear();
-      Object.entries(state).forEach(([key, payloads]) => {
-        // payloads is an array; use the latest entry
-        const latest = Array.isArray(payloads) ? payloads[payloads.length - 1] : payloads;
-        const s = latest?.presence_status || 'online';
-        if (s === 'online' || s === 'away') presenceMap.set(key, s);
-      });
+      onlineUsers.clear();
+      Object.keys(state).forEach(key => { onlineUsers.add(key); });
       updatePresenceDots();
     })
-    .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      const latest = Array.isArray(newPresences) ? newPresences[newPresences.length - 1] : newPresences;
-      const s = latest?.presence_status || 'online';
-      if (s === 'online' || s === 'away') presenceMap.set(key, s);
-      else presenceMap.delete(key);
-      updatePresenceDots();
-    })
-    .on('presence', { event: 'leave' }, ({ key }) => { presenceMap.delete(key); updatePresenceDots(); })
+    .on('presence', { event: 'join' }, ({ key }) => { onlineUsers.add(key); updatePresenceDots(); })
+    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); updatePresenceDots(); })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await _updateMyPresenceTrack();
+        await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
       }
     });
 }
@@ -3453,76 +3448,30 @@ async function leavePresence() {
     await supabaseClient.removeChannel(presenceChannel);
     presenceChannel = null;
   }
-  presenceMap.clear();
+  onlineUsers.clear();
   updatePresenceDots();
-}
-
-// Recompute and push my own presence payload based on current ghost/tab/admin state
-async function _updateMyPresenceTrack() {
-  if (!presenceChannel || !currentUser) return;
-  const tabVisible = document.visibilityState === 'visible' && document.hasFocus();
-  const adminOpen  = _isAdminPanelOpen();
-
-  let newStatus = null; // null = untrack (appear offline)
-
-  if (_ghostModeEnabled) {
-    // Ghost ON: only show green when tab is active, otherwise appear offline
-    if (tabVisible) {
-      newStatus = 'online';
-    }
-    // blurred/hidden → null → untrack
-  } else {
-    // Ghost OFF:
-    if (tabVisible) {
-      newStatus = 'online'; // green — tab focused and admin/dm open or not
-    } else if (adminOpen) {
-      newStatus = 'away';   // blue — tab blurred but admin panel still flagged open
-    }
-    // tab hidden AND admin closed → null → untrack
-  }
-
-  try {
-    if (newStatus) {
-      await presenceChannel.track({
-        user_id: currentUser.id,
-        online_at: new Date().toISOString(),
-        presence_status: newStatus
-      });
-    } else {
-      await presenceChannel.untrack();
-    }
-  } catch(e) {}
-}
-
-function _setDotState(dot, status) {
-  if (!dot) return;
-  dot.classList.remove('online', 'away', 'offline');
-  if (status === 'online') dot.classList.add('online');
-  else if (status === 'away') dot.classList.add('away');
-  else dot.classList.add('offline');
 }
 
 function updatePresenceDots() {
   // Update active chat topbar dot
   if (activeDmId) {
-    const s = presenceMap.get(activeDmId) || 'offline';
-    _setDotState(document.getElementById('dmPresenceDot'), s);
-    _setDotState(document.getElementById('dmFsPresenceDot'), s);
+    const isOnline = onlineUsers.has(activeDmId);
+    const dot = document.getElementById('dmPresenceDot');
+    if (dot) { dot.classList.toggle('online', isOnline); dot.classList.toggle('offline', !isOnline); }
+    const fsDot = document.getElementById('dmFsPresenceDot');
+    if (fsDot) { fsDot.classList.toggle('online', isOnline); fsDot.classList.toggle('offline', !isOnline); }
   }
   // Update all DM conv list presence dots (both desktop + mobile FS list)
   document.querySelectorAll('.dm-conv-presence-dot[data-presence-user]').forEach(dot => {
     const userId = dot.dataset.presenceUser;
-    const s = presenceMap.get(userId) || 'offline';
-    dot.classList.remove('online', 'away');
-    if (s === 'online') dot.classList.add('online');
-    else if (s === 'away') dot.classList.add('away');
+    dot.classList.toggle('online', onlineUsers.has(userId));
   });
 }
 
 function resetPresenceDots() {
   ['dmPresenceDot', 'dmFsPresenceDot'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.classList.remove('online', 'away'); el.classList.add('offline'); }
+    if (el) { el.classList.remove('online'); el.classList.add('offline'); }
   });
 }
 
@@ -4868,14 +4817,13 @@ function buildDMConvList() {
         : DEFAULT_AVATAR_SVG;
       const avatarBg = c.avatarUrl ? 'transparent' : '#e8e8ec';
 
-      const _presStatus = presenceMap.get(c.id);
-      const _presClass = _presStatus === 'online' ? ' online' : _presStatus === 'away' ? ' away' : '';
+      const isOnlineInList = onlineUsers.has(c.id);
       item.innerHTML = `
         <div class="dm-conv-avatar-wrap">
           <div class="dm-conv-avatar default-avatar" style="background:${avatarBg};overflow:hidden;position:relative;">
             ${avatarInner}
           </div>
-          <div class="dm-conv-presence-dot${_presClass}" data-presence-user="${c.id}"></div>
+          <div class="dm-conv-presence-dot${isOnlineInList ? ' online' : ''}" data-presence-user="${c.id}"></div>
         </div>
         <div class="dm-conv-info">
           <div class="dm-conv-name">${escHtml(c.name)}</div>
@@ -4962,6 +4910,7 @@ async function openDesktopChat(id) {
   if (!contact) return;
   contact.unread = false;
   contact.unreadCount = 0;
+  document.getElementById('dmProfileTab')?.classList.remove('show');
   activeDmId = id;
 
   // Increment token — any in-flight loadMessages for a different id will bail
@@ -8794,25 +8743,19 @@ function _ghostTrigger() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     _ghostTrigger();
-    _updateMyPresenceTrack();
   } else if (document.visibilityState === 'visible' && activeDmId) {
     markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
-    _updateMyPresenceTrack();
   }
 });
 
-window.addEventListener('blur', () => {
-  _ghostTrigger();
-  _updateMyPresenceTrack();
-});
+window.addEventListener('blur', () => { _ghostTrigger(); });
 
 window.addEventListener('focus', () => {
   if (activeDmId) {
     markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
   }
-  _updateMyPresenceTrack();
 });
 
 async function loadGhostMode() {
@@ -8838,7 +8781,6 @@ async function toggleGhostMode() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
     await supabaseClient.from('profiles').update({ ghost_mode: _ghostModeEnabled }).eq('id', user.id);
-    await _updateMyPresenceTrack();
   } catch(e) {
     // Revert on failure
     _ghostModeEnabled = !_ghostModeEnabled;
