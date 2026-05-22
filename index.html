@@ -3416,29 +3416,30 @@ const subscriptionManager = {
 };
 
 // ── PRESENCE SYSTEM ──
+// Uses Supabase Realtime with two layers:
+//   1. Presence tracking  — syncs online/away state across all clients in real time
+//   2. Broadcast          — fires an instant "offline" signal before channel teardown
+//      so the other user's dot disappears immediately, not after a heartbeat timeout.
 let presenceChannel = null;
 let onlineUsers = new Map(); // userId -> 'online' | 'away'
 let _myPresenceStatus = 'online';
 
-// ── PRESENCE: compute what our status should be right now ──
-// online  = panel open + tab focused
-// away    = panel open + tab visible but not focused, OR tab hidden
-// offline = panel closed (leavePresence called)
+// What status should we broadcast right now?
+// online = panel open + tab/window focused
+// away   = panel open but tab hidden or window blurred
 function _computeMyStatus() {
   if (document.hidden) return 'away';
-  // document.hasFocus() is true only when THIS tab/window is the active one
   if (!document.hasFocus()) return 'away';
   return 'online';
 }
 
-// Broadcast current status; no-op if channel not ready or ghost mode on
+// Push our current status to the presence channel.
+// Ghost mode: only suppress 'away' — green still shows when focused.
 function _broadcastPresence() {
   if (!presenceChannel || !currentUser || !dmOpen) return;
-  let status = _computeMyStatus();
-  // Ghost mode: never broadcast away (panel auto-closes when unfocused anyway),
-  // but still show green when actively focused so the other user sees you online.
-  if (_ghostModeEnabled && status === 'away') return;
-  if (_myPresenceStatus === status) return; // no change — skip round-trip
+  const status = _computeMyStatus();
+  if (_ghostModeEnabled && status === 'away') return; // ghost: no blue dot
+  if (_myPresenceStatus === status) return;           // no change, skip
   _myPresenceStatus = status;
   presenceChannel.track({
     user_id: currentUser.id,
@@ -3447,29 +3448,37 @@ function _broadcastPresence() {
   }).catch(() => {});
 }
 
-// All three events that change focus/visibility fire _broadcastPresence
+// All three focus/visibility events re-evaluate and broadcast
 document.addEventListener('visibilitychange', _broadcastPresence);
 window.addEventListener('focus', _broadcastPresence);
 window.addEventListener('blur', _broadcastPresence);
 
 async function joinPresence() {
   if (!currentUser) return;
+  // Tear down any stale channel first
   if (presenceChannel) {
-    await supabaseClient.removeChannel(presenceChannel);
+    try { await supabaseClient.removeChannel(presenceChannel); } catch(e) {}
     presenceChannel = null;
   }
 
-  // Ghost mode: still join so green dot works when focused;
-  // away is simply never broadcast (handled in _broadcastPresence).
   _myPresenceStatus = _computeMyStatus();
-  // If starting in away state under ghost mode, treat as online so we don't broadcast away on subscribe
+  // Ghost mode + unfocused: start as online (never broadcast away on ghost)
   if (_ghostModeEnabled && _myPresenceStatus === 'away') _myPresenceStatus = 'online';
 
-  presenceChannel = supabaseClient.channel('admin-dm-presence', {
+  presenceChannel = supabaseClient.channel('hether-presence', {
     config: { presence: { key: currentUser.id } }
   });
 
   presenceChannel
+    // ── Broadcast: instant offline signal sent by the leaving user ──
+    .on('broadcast', { event: 'offline' }, ({ payload }) => {
+      const uid = payload?.user_id;
+      if (uid) {
+        onlineUsers.delete(uid);
+        updatePresenceDots();
+      }
+    })
+    // ── Presence sync: fires on subscribe and whenever state changes ──
     .on('presence', { event: 'sync' }, () => {
       const state = presenceChannel.presenceState();
       onlineUsers.clear();
@@ -3486,6 +3495,7 @@ async function joinPresence() {
       updatePresenceDots();
     })
     .on('presence', { event: 'leave' }, ({ key }) => {
+      // Fallback — also fires if the user's connection drops without a clean leave
       onlineUsers.delete(key);
       updatePresenceDots();
     })
@@ -3501,12 +3511,21 @@ async function joinPresence() {
 }
 
 async function leavePresence() {
-  _myPresenceStatus = 'online'; // reset so next join starts fresh
-  if (presenceChannel) {
+  if (presenceChannel && currentUser) {
+    try {
+      // Step 1: broadcast instant offline signal — arrives at other clients
+      // before we even untrack, so their dot disappears immediately
+      await presenceChannel.send({
+        type: 'broadcast',
+        event: 'offline',
+        payload: { user_id: currentUser.id }
+      });
+    } catch(e) {}
     try { await presenceChannel.untrack(); } catch(e) {}
-    await supabaseClient.removeChannel(presenceChannel);
+    try { await supabaseClient.removeChannel(presenceChannel); } catch(e) {}
     presenceChannel = null;
   }
+  _myPresenceStatus = 'online'; // reset for next join
   onlineUsers.clear();
   updatePresenceDots();
 }
@@ -4452,11 +4471,17 @@ function _dismissAdminOverlay() {
 
 // Public close — called by Cancel button, ESC, clicking outside, browser events.
 // Always wipes auth so admin panel can never reopen without the key.
+// If the DM panel is already open (dmOpen=true), performs a full closeDM()
+// so presence is torn down, channel cleaned up, and offline is broadcast instantly.
 function closeAdminPopup() {
   _adminSessionValid = false;
   adminAuthenticated = false;
   document.getElementById('dmProfileTab')?.classList.remove('show');
   _dismissAdminOverlay();
+  // If DM is open, do a full proper close (tears down presence, channels, flags)
+  if (dmOpen) {
+    closeDM();
+  }
 }
 
 function openAdminPopup() {
@@ -4806,12 +4831,14 @@ async function openDM() {
 }
 
 async function closeDM() {
+  if (!dmOpen) return; // guard against double-close (e.g. closeAdminPopup -> closeDM -> closeDM)
   dmOpen = false;
   // Wipe auth flags unconditionally — no path should leave these true after close
   adminAuthenticated = false;
   _adminSessionValid = false;
-  // Also dismiss the admin overlay UI in case it was open simultaneously
+  // Dismiss admin overlay UI if it was open simultaneously
   _dismissAdminOverlay();
+  // Broadcast offline instantly via presence channel before teardown
   await leavePresence();
   activeDmId = null;
   document.getElementById('dmOverlay').classList.remove('show');
@@ -8800,8 +8827,11 @@ function _isAdminPanelOpen() {
 function _ghostTrigger() {
   if (!_ghostModeEnabled) return;
   if (!_isAdminPanelOpen()) return;
-  // Full close — same as user pressing Cancel on admin popup
+  // Full close — closeAdminPopup wipes flags; if dmOpen it also calls closeDM()
+  // which broadcasts offline instantly and tears down all channels.
   closeAdminPopup();
+  // closeDM is idempotent (has dmOpen guard), safe to call directly too
+  // in case the DM panel was open but adminOverlay was not
   if (typeof closeDM === 'function') closeDM();
 }
 
