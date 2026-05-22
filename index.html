@@ -3420,20 +3420,37 @@ let presenceChannel = null;
 let onlineUsers = new Map(); // userId -> 'online' | 'away'
 let _myPresenceStatus = 'online';
 
-// Track tab visibility and broadcast away/online status.
-// Only visibilitychange is used — window.blur fires on too many false positives
-// (address bar, devtools, iframes) and causes stuck blue dots.
-document.addEventListener('visibilitychange', () => {
+// ── PRESENCE: compute what our status should be right now ──
+// online  = panel open + tab focused
+// away    = panel open + tab visible but not focused, OR tab hidden
+// offline = panel closed (leavePresence called)
+function _computeMyStatus() {
+  if (document.hidden) return 'away';
+  // document.hasFocus() is true only when THIS tab/window is the active one
+  if (!document.hasFocus()) return 'away';
+  return 'online';
+}
+
+// Broadcast current status; no-op if channel not ready or ghost mode on
+function _broadcastPresence() {
   if (!presenceChannel || !currentUser || !dmOpen) return;
-  const status = document.hidden ? 'away' : 'online';
-  if (_myPresenceStatus === status) return;
+  let status = _computeMyStatus();
+  // Ghost mode: never broadcast away (panel auto-closes when unfocused anyway),
+  // but still show green when actively focused so the other user sees you online.
+  if (_ghostModeEnabled && status === 'away') return;
+  if (_myPresenceStatus === status) return; // no change — skip round-trip
   _myPresenceStatus = status;
   presenceChannel.track({
     user_id: currentUser.id,
     status,
     online_at: new Date().toISOString()
   }).catch(() => {});
-});
+}
+
+// All three events that change focus/visibility fire _broadcastPresence
+document.addEventListener('visibilitychange', _broadcastPresence);
+window.addEventListener('focus', _broadcastPresence);
+window.addEventListener('blur', _broadcastPresence);
 
 async function joinPresence() {
   if (!currentUser) return;
@@ -3442,7 +3459,11 @@ async function joinPresence() {
     presenceChannel = null;
   }
 
-  _myPresenceStatus = document.hidden ? 'away' : 'online';
+  // Ghost mode: still join so green dot works when focused;
+  // away is simply never broadcast (handled in _broadcastPresence).
+  _myPresenceStatus = _computeMyStatus();
+  // If starting in away state under ghost mode, treat as online so we don't broadcast away on subscribe
+  if (_ghostModeEnabled && _myPresenceStatus === 'away') _myPresenceStatus = 'online';
 
   presenceChannel = supabaseClient.channel('admin-dm-presence', {
     config: { presence: { key: currentUser.id } }
@@ -3480,7 +3501,7 @@ async function joinPresence() {
 }
 
 async function leavePresence() {
-  _myPresenceStatus = 'online'; // reset so next join always starts fresh as online
+  _myPresenceStatus = 'online'; // reset so next join starts fresh
   if (presenceChannel) {
     try { await presenceChannel.untrack(); } catch(e) {}
     await supabaseClient.removeChannel(presenceChannel);
@@ -8901,6 +8922,22 @@ async function toggleGhostMode() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
     await supabaseClient.from('profiles').update({ ghost_mode: _ghostModeEnabled }).eq('id', user.id);
+    // Re-sync presence: if ghost turned on, force-broadcast online (drop any blue dot).
+    // If ghost turned off, re-join so away state can now be broadcast normally.
+    if (dmOpen) {
+      if (_ghostModeEnabled) {
+        // Just re-track as online to clear any lingering away/blue dot
+        if (presenceChannel) {
+          _myPresenceStatus = 'online';
+          presenceChannel.track({ user_id: currentUser.id, status: 'online', online_at: new Date().toISOString() }).catch(() => {});
+        } else {
+          await joinPresence(); // wasn't in channel yet, join now
+        }
+      } else {
+        // Ghost off: re-join fresh so away can now broadcast correctly
+        await joinPresence();
+      }
+    }
   } catch(e) {
     // Revert on failure
     _ghostModeEnabled = !_ghostModeEnabled;
