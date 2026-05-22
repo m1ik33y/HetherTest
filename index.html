@@ -3421,25 +3421,21 @@ let presenceChannel = null;
 let onlineUsers = new Map();
 let _myPresenceStatus = 'online';
 
-// Detect tab/window focus changes and broadcast away status
+// Detect tab/window focus changes and broadcast away status.
+// We use ONLY visibilitychange — window.blur fires on too many false positives
+// (clicking address bar, devtools, any iframe) and causes permanent blue dots.
 (function setupAwayDetection() {
-  function setMyStatus(status) {
+  document.addEventListener('visibilitychange', () => {
+    if (!presenceChannel || !currentUser || !dmOpen) return;
+    const status = document.hidden ? 'away' : 'online';
     if (_myPresenceStatus === status) return;
     _myPresenceStatus = status;
-    if (presenceChannel && currentUser) {
-      presenceChannel.track({
-        user_id: currentUser.id,
-        status: status,
-        online_at: new Date().toISOString()
-      }).catch(() => {});
-    }
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    setMyStatus(document.hidden ? 'away' : 'online');
+    presenceChannel.track({
+      user_id: currentUser.id,
+      status: status,
+      online_at: new Date().toISOString()
+    }).catch(() => {});
   });
-  window.addEventListener('blur', () => setMyStatus('away'));
-  window.addEventListener('focus', () => setMyStatus('online'));
 })();
 
 async function joinPresence() {
@@ -3485,6 +3481,7 @@ async function joinPresence() {
 }
 
 async function leavePresence() {
+  _myPresenceStatus = 'online'; // always reset so next join starts fresh
   if (presenceChannel) {
     try { await presenceChannel.untrack(); } catch(e) {}
     await supabaseClient.removeChannel(presenceChannel);
