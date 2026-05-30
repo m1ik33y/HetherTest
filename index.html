@@ -6974,6 +6974,7 @@ async function dmSend(mode) {
   // Lock send button immediately — clear input right away so user knows it's queued
   if (sendBtn) { sendBtn.dataset.sending = '1'; sendBtn.style.opacity = '0.5'; sendBtn.disabled = true; }
   input.value = ''; input.style.height = 'auto';
+  if (mode === 'mobile') { requestAnimationFrame(() => input.focus()); }
   if (mode === 'mobile') toggleDmFsSendBtn(); else toggleDmSendBtn();
 
   const { data: { user } } = await supabaseClient.auth.getUser();
