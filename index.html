@@ -5937,12 +5937,8 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
     let aborted          = false;  // gesture aborted (too much vertical drift)
 
     const LONG_PRESS_MS  = 1800;
-    const SWIPE_TRIGGER  = 130;   // px of FINGER travel to arm the reply
-    const SWIPE_MAX_VERT = 28;    // vertical drift limit before aborting swipe
-    const SWIPE_SHOW_AT  = 14;    // px at which arrow starts appearing
-    // Bubble visual travel is much smaller than finger travel — gives the stretch feel.
-    // MAX_TRANSLATE is the furthest the bubble moves visually (px).
-    const MAX_TRANSLATE  = 46;
+    const SWIPE_MAX_VERT = 28;
+    const SWIPE_SHOW_AT  = 14;
 
     // swipeDir: +1 = right (received), -1 = left (sent)
     const swipeDir = isSent ? -1 : 1;
@@ -6035,30 +6031,30 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
 
       isTracking = true;
 
-      // ── Rubber-band physics ──
-      // Bubble travels on a log curve so it feels heavy/stretchy at far pulls.
-      // log(1 + dx) grows fast early (snappy) and slows down (stretchy) — instagram-like.
-      const logTravel  = Math.log1p(dx) * (MAX_TRANSLATE / Math.log1p(SWIPE_TRIGGER));
-      const translatePx = Math.min(logTravel, MAX_TRANSLATE) * swipeDir;
-      bubble.style.transform = `translateX(${translatePx}px)`;
+      // Threshold = 55% of screen width, computed live
+      const SWIPE_TRIGGER = window.innerWidth * 0.55;
 
-      // Arrow fades + scales with progress
+      // Bubble tracks finger 1:1 — no cap, can slide all the way across screen
+      bubble.style.transform = `translateX(${dx * swipeDir}px)`;
+
+      // Arrow fades + scales with progress toward threshold
       if (dx > SWIPE_SHOW_AT) {
         const progress = Math.min((dx - SWIPE_SHOW_AT) / (SWIPE_TRIGGER - SWIPE_SHOW_AT), 1);
         const arrow    = getArrow();
         arrow.style.transition = 'none';
         arrow.style.opacity    = (progress * 0.95).toFixed(2);
-        const sc = 0.65 + progress * 0.5; // 0.65 → 1.15, pops at threshold
+        const sc = 0.65 + progress * 0.5; // 0.65 → 1.15
         arrow.style.transform  = `translateY(-50%) scale(${sc.toFixed(2)})`;
       }
 
-      // Arm the reply (don't fire yet — wait for finger release)
-      if (dx >= SWIPE_TRIGGER && !pastThreshold) {
+      // Arm/disarm reply based on 55% threshold
+      const SWIPE_TRIGGER2 = window.innerWidth * 0.55;
+      if (dx >= SWIPE_TRIGGER2 && !pastThreshold) {
         pastThreshold = true;
-        if (navigator.vibrate) navigator.vibrate(38); // haptic "click" at threshold
+        if (navigator.vibrate) navigator.vibrate(38);
       }
-      if (dx < SWIPE_TRIGGER) {
-        pastThreshold = false; // finger pulled back below threshold — disarm
+      if (dx < SWIPE_TRIGGER2) {
+        pastThreshold = false;
       }
     }, { passive: true });
 
