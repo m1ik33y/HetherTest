@@ -3399,7 +3399,7 @@ body {
         </label>
         <input type="file" id="dmFsMediaUpload" accept="image/*,video/*" style="display:none" onchange="stageDmMedia(event,'mobile')">
         <textarea id="dmFsInput" placeholder="Message…" oninput="onDmInputChange('mobile'); toggleDmFsSendBtn(); autoResizeDm(this)" onfocus="onDmInputFocus('mobile')" onblur="onDmInputBlur('mobile')" onkeydown="onDmKeypress('mobile'); dmHandleKey(event,'mobile')" onpaste="handleDmPaste(event,'mobile')" rows="1"></textarea>
-        <button class="dm-send-btn" id="dmFsSendBtn" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()" onclick="dmSend('mobile')">
+        <button class="dm-send-btn" id="dmFsSendBtn" onmousedown="event.preventDefault()" ontouchend="event.preventDefault(); dmSend('mobile')" onclick="if(!('ontouchstart' in window)) dmSend('mobile')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
