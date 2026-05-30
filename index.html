@@ -5928,23 +5928,22 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
     if (!isMobile()) showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
   });
 
-  // ── MOBILE: long-press (1.8s) → context menu; directional swipe → reply; tap → nothing ──
+  // ── MOBILE: long-press (1.8s) → context menu; directional swipe → reply on release; tap → nothing ──
   (function attachMobileBubbleGestures(bubble, bWrap, msg, isSent, contact) {
-    let pressTimer = null;
-    let touchStartX = 0, touchStartY = 0;
-    let swipeTriggered = false;
-    let longPressTriggered = false;
-    let isTracking = false;  // true once we've committed to a horizontal swipe
+    let pressTimer       = null;
+    let touchStartX      = 0, touchStartY = 0;
+    let isTracking       = false;  // committed to a horizontal swipe
+    let pastThreshold    = false;  // finger went far enough to trigger reply on release
+    let aborted          = false;  // gesture aborted (too much vertical drift)
 
     const LONG_PRESS_MS  = 1800;
-    const SWIPE_TRIGGER  = 110;  // px to fire reply — longer = more intentional
-    const SWIPE_MAX_VERT = 30;   // max vertical drift before we abort swipe
-    const SWIPE_SHOW_AT  = 18;   // px at which arrow starts fading in
-    // Rubber-band: bubble moves at fraction of finger, decelerating as it stretches
-    const RESISTANCE     = 0.38; // base multiplier — feels springy
-    const MAX_BUBBLE_TRANSLATE = 36; // px cap on bubble movement
+    const SWIPE_TRIGGER  = 130;   // px of FINGER travel to arm the reply
+    const SWIPE_MAX_VERT = 28;    // vertical drift limit before aborting swipe
+    const SWIPE_SHOW_AT  = 14;    // px at which arrow starts appearing
+    // Bubble visual travel is much smaller than finger travel — gives the stretch feel.
+    // MAX_TRANSLATE is the furthest the bubble moves visually (px).
+    const MAX_TRANSLATE  = 46;
 
-    // Sent messages swipe LEFT (negative dx), received swipe RIGHT (positive dx)
     // swipeDir: +1 = right (received), -1 = left (sent)
     const swipeDir = isSent ? -1 : 1;
 
@@ -5953,18 +5952,17 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
       if (!swipeArrow) {
         swipeArrow = document.createElement('div');
         swipeArrow.style.cssText = [
-          'position:absolute','top:50%','transform:translateY(-50%) scale(0.7)',
-          'width:28px','height:28px','border-radius:50%',
+          'position:absolute','top:50%','transform:translateY(-50%) scale(0.65)',
+          'width:30px','height:30px','border-radius:50%',
           'background:var(--accent)','color:#fff',
           'display:flex','align-items:center','justify-content:center',
           'opacity:0',
-          'transition:opacity 0.12s, transform 0.12s',
+          'transition:opacity 0.1s ease, transform 0.1s ease',
           'pointer-events:none','z-index:10'
         ].join(';');
         swipeArrow.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
-        // Received: arrow appears to the right of bubble; Sent: to the left
-        if (isSent) { swipeArrow.style.right = '100%'; swipeArrow.style.marginRight = '4px'; }
-        else         { swipeArrow.style.left  = '100%'; swipeArrow.style.marginLeft  = '4px'; }
+        if (isSent) { swipeArrow.style.right = '100%'; swipeArrow.style.marginRight = '5px'; }
+        else         { swipeArrow.style.left  = '100%'; swipeArrow.style.marginLeft  = '5px'; }
         bWrap.style.position = 'relative';
         bWrap.appendChild(swipeArrow);
       }
@@ -5975,83 +5973,103 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
       if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
     }
 
-    function resetBubble() {
-      bubble.style.transition = 'transform 0.32s cubic-bezier(0.25,1.4,0.5,1)';
+    // Snap bubble back with spring animation — called only on release/cancel
+    function snapBack() {
+      bubble.style.transition = 'transform 0.35s cubic-bezier(0.22,1.6,0.36,1)';
       bubble.style.transform  = '';
-      if (swipeArrow) {
-        swipeArrow.style.opacity   = '0';
-        swipeArrow.style.transform = 'translateY(-50%) scale(0.7)';
-      }
-      isTracking = false;
+      const arrow = getArrow();
+      arrow.style.transition  = 'opacity 0.18s ease, transform 0.18s ease';
+      arrow.style.opacity     = '0';
+      arrow.style.transform   = 'translateY(-50%) scale(0.65)';
     }
 
     bubble.addEventListener('touchstart', (e) => {
       if (!isMobile()) return;
       const t = e.touches[0];
-      touchStartX = t.clientX;
-      touchStartY = t.clientY;
-      swipeTriggered  = false;
-      longPressTriggered = false;
-      isTracking = false;
+      touchStartX   = t.clientX;
+      touchStartY   = t.clientY;
+      isTracking    = false;
+      pastThreshold = false;
+      aborted       = false;
+      // Remove transition so movement tracks finger instantly
       bubble.style.transition = 'none';
 
       pressTimer = setTimeout(() => {
-        if (isTracking) return; // don't fire if mid-swipe
-        longPressTriggered = true;
-        pressTimer = null;
+        if (isTracking) return;
+        cancelPress();
         if (navigator.vibrate) navigator.vibrate(45);
         showCtxMenu(touchStartX, touchStartY, bWrap, msg, isSent, contact);
       }, LONG_PRESS_MS);
     }, { passive: true });
 
     bubble.addEventListener('touchmove', (e) => {
-      if (!isMobile() || swipeTriggered) return;
-      const t = e.touches[0];
-      const rawDx = t.clientX - touchStartX;
-      const dy    = Math.abs(t.clientY - touchStartY);
-      // Directional delta — positive means "in the swipe direction"
-      const dx = rawDx * swipeDir;
+      if (!isMobile() || aborted) return;
+      const t      = e.touches[0];
+      const rawDx  = t.clientX - touchStartX;
+      const dy     = Math.abs(t.clientY - touchStartY);
+      const dx     = rawDx * swipeDir; // positive = correct direction
 
-      // Cancel long-press once finger moves
-      if (Math.abs(rawDx) > 8 || dy > 8) cancelPress();
+      // Cancel long-press the moment finger moves
+      if (Math.abs(rawDx) > 6 || dy > 6) cancelPress();
 
-      // Abort if too much vertical drift or swiping the wrong way
-      if (dy > SWIPE_MAX_VERT) { resetBubble(); return; }
-      if (dx <= 0) return; // wrong direction
-
-      // Commit to tracking this as a swipe gesture
-      isTracking = true;
-
-      // Rubber-band easing: movement decelerates as bubble stretches further
-      // Uses sqrt curve so early movement feels snappy, late feels heavy
-      const rubberDx = Math.sqrt(dx) * (RESISTANCE * Math.sqrt(SWIPE_TRIGGER));
-      const translatePx = Math.min(rubberDx, MAX_BUBBLE_TRANSLATE) * swipeDir;
-
-      bubble.style.transform = `translateX(${translatePx}px)`;
-
-      // Arrow fades in and scales up as swipe progresses
-      if (dx > SWIPE_SHOW_AT) {
-        const progress = Math.min((dx - SWIPE_SHOW_AT) / (SWIPE_TRIGGER - SWIPE_SHOW_AT), 1);
-        const arrow = getArrow();
-        arrow.style.opacity   = (progress * 0.9).toFixed(2);
-        const sc = 0.7 + progress * 0.4; // 0.7 → 1.1
-        arrow.style.transform = `translateY(-50%) scale(${sc.toFixed(2)})`;
+      // Too much vertical drift — abort swipe entirely
+      if (dy > SWIPE_MAX_VERT) {
+        aborted = true;
+        snapBack();
+        return;
       }
 
-      // Fire reply at threshold
-      if (dx >= SWIPE_TRIGGER) {
-        swipeTriggered = true;
-        cancelPress();
-        if (navigator.vibrate) navigator.vibrate(35);
-        startReply(bWrap.dataset.text, bWrap.dataset.sender);
-        resetBubble();
+      // Wrong direction — just ignore (don't abort, let them swipe back)
+      if (dx <= 0) {
+        if (isTracking) {
+          // finger came back — reset visual but keep tracking
+          bubble.style.transition = 'none';
+          bubble.style.transform  = '';
+          const arrow = getArrow();
+          arrow.style.opacity   = '0';
+          arrow.style.transform = 'translateY(-50%) scale(0.65)';
+          pastThreshold = false;
+        }
+        return;
+      }
+
+      isTracking = true;
+
+      // ── Rubber-band physics ──
+      // Bubble travels on a log curve so it feels heavy/stretchy at far pulls.
+      // log(1 + dx) grows fast early (snappy) and slows down (stretchy) — instagram-like.
+      const logTravel  = Math.log1p(dx) * (MAX_TRANSLATE / Math.log1p(SWIPE_TRIGGER));
+      const translatePx = Math.min(logTravel, MAX_TRANSLATE) * swipeDir;
+      bubble.style.transform = `translateX(${translatePx}px)`;
+
+      // Arrow fades + scales with progress
+      if (dx > SWIPE_SHOW_AT) {
+        const progress = Math.min((dx - SWIPE_SHOW_AT) / (SWIPE_TRIGGER - SWIPE_SHOW_AT), 1);
+        const arrow    = getArrow();
+        arrow.style.transition = 'none';
+        arrow.style.opacity    = (progress * 0.95).toFixed(2);
+        const sc = 0.65 + progress * 0.5; // 0.65 → 1.15, pops at threshold
+        arrow.style.transform  = `translateY(-50%) scale(${sc.toFixed(2)})`;
+      }
+
+      // Arm the reply (don't fire yet — wait for finger release)
+      if (dx >= SWIPE_TRIGGER && !pastThreshold) {
+        pastThreshold = true;
+        if (navigator.vibrate) navigator.vibrate(38); // haptic "click" at threshold
+      }
+      if (dx < SWIPE_TRIGGER) {
+        pastThreshold = false; // finger pulled back below threshold — disarm
       }
     }, { passive: true });
 
     function onTouchEnd() {
       if (!isMobile()) return;
       cancelPress();
-      resetBubble();
+      if (!aborted && pastThreshold) {
+        // Finger was past threshold when released — fire reply, then snap back
+        startReply(bWrap.dataset.text, bWrap.dataset.sender);
+      }
+      snapBack();
     }
 
     bubble.addEventListener('touchend',    onTouchEnd, { passive: true });
