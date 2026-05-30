@@ -3399,7 +3399,7 @@ body {
         </label>
         <input type="file" id="dmFsMediaUpload" accept="image/*,video/*" style="display:none" onchange="stageDmMedia(event,'mobile')">
         <textarea id="dmFsInput" placeholder="Message…" oninput="onDmInputChange('mobile'); toggleDmFsSendBtn(); autoResizeDm(this)" onfocus="onDmInputFocus('mobile')" onblur="onDmInputBlur('mobile')" onkeydown="onDmKeypress('mobile'); dmHandleKey(event,'mobile')" onpaste="handleDmPaste(event,'mobile')" rows="1"></textarea>
-        <button class="dm-send-btn" id="dmFsSendBtn" onclick="dmSend('mobile')">
+        <button class="dm-send-btn" id="dmFsSendBtn" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()" onclick="dmSend('mobile')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
@@ -6974,7 +6974,7 @@ async function dmSend(mode) {
   // Lock send button immediately — clear input right away so user knows it's queued
   if (sendBtn) { sendBtn.dataset.sending = '1'; sendBtn.style.opacity = '0.5'; sendBtn.disabled = true; }
   input.value = ''; input.style.height = 'auto';
-  if (mode === 'mobile') { requestAnimationFrame(() => input.focus()); }
+  if (mode === 'mobile') input.focus();
   if (mode === 'mobile') toggleDmFsSendBtn(); else toggleDmSendBtn();
 
   const { data: { user } } = await supabaseClient.auth.getUser();
@@ -7114,9 +7114,9 @@ async function dmSend(mode) {
   } finally {
     // Unlock send button
     if (sendBtn) { delete sendBtn.dataset.sending; sendBtn.style.opacity = ''; sendBtn.disabled = false; }
-    // On mobile, don't re-focus — that's what causes the keyboard to drop and bounce back.
-    // The input already has focus; just leave it alone.
-    if (!isMobile()) input.focus();
+    // On mobile, re-focus to keep keyboard up
+    if (mode === 'mobile') input.focus();
+    else input.focus();
   }
 }
 
