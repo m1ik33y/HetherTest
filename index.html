@@ -6003,13 +6003,13 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
 
       bubble.style.transform = `translateX(${clampedDx * swipeDir}px)`;
 
-      // Threshold = 55% of screen width
-      const SWIPE_TRIGGER = window.innerWidth * 0.55;
-      if (dx >= SWIPE_TRIGGER && !pastThreshold) {
+      // Threshold = 55% of max possible travel for this bubble
+      const SWIPE_TRIGGER = maxTravel * 0.55;
+      if (clampedDx >= SWIPE_TRIGGER && !pastThreshold) {
         pastThreshold = true;
         if (navigator.vibrate) navigator.vibrate(38);
       }
-      if (dx < SWIPE_TRIGGER) pastThreshold = false;
+      if (clampedDx < SWIPE_TRIGGER) pastThreshold = false;
     }, { passive: true });
 
     function onTouchEnd() {
