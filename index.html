@@ -7338,6 +7338,11 @@ function addAccount() { closeProfileDropdown(); alert('Add account flow — inte
 function logOut() { closeProfileDropdown(); document.getElementById('logoutOverlay').classList.add('show'); }
 function closeLogout() { document.getElementById('logoutOverlay').classList.remove('show'); }
 async function confirmLogout() {
+  // Wipe admin auth flags before anything else — no path leaves these true after logout
+  adminAuthenticated = false;
+  _adminSessionValid = false;
+  _dismissAdminOverlay();
+  if (dmOpen) await closeDM();
   await supabaseClient.auth.signOut();
   profile = { name: 'User', username: '@user', email: 'user@example.com', avatarUrl: null };
   renderProfileEverywhere();
