@@ -5935,11 +5935,11 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
     let isTracking    = false;
     let pastThreshold = false;
     let aborted       = false;
+    let maxTravel     = 0; // computed once on touchstart from resting position
 
     const LONG_PRESS_MS  = 1800;
     const SWIPE_MAX_VERT = 28;
-    const SCREEN_MARGIN  = 16; // px gap between bubble edge and screen edge
-    // swipeDir: +1 = right (received), -1 = left (sent)
+    const SCREEN_MARGIN  = 16;
     const swipeDir = isSent ? -1 : 1;
 
     function cancelPress() {
@@ -5960,6 +5960,13 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
       pastThreshold = false;
       aborted       = false;
       bubble.style.transition = 'none';
+
+      // Capture resting position ONCE — used to clamp travel without feedback loop
+      const rect = bubble.getBoundingClientRect();
+      maxTravel = isSent
+        ? rect.left - SCREEN_MARGIN
+        : window.innerWidth - rect.right - SCREEN_MARGIN;
+      maxTravel = Math.max(maxTravel, 0);
 
       pressTimer = setTimeout(() => {
         if (isTracking) return;
@@ -5991,14 +5998,8 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
 
       isTracking = true;
 
-      // Max travel = distance from bubble's far edge to the screen edge (with margin)
-      // For received: bubble slides right → its right edge → screen right
-      // For sent:     bubble slides left  → its left edge  → screen left
-      const bubbleRect = bubble.getBoundingClientRect();
-      const maxTravel = isSent
-        ? bubbleRect.left - SCREEN_MARGIN                        // left edge to left wall
-        : window.innerWidth - bubbleRect.right - SCREEN_MARGIN; // right edge to right wall
-      const clampedDx = Math.min(dx, Math.max(maxTravel, 0));
+      // Clamp to pre-captured max travel so bubble edge never leaves the screen
+      const clampedDx = Math.min(dx, maxTravel);
 
       bubble.style.transform = `translateX(${clampedDx * swipeDir}px)`;
 
