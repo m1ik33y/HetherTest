@@ -7113,7 +7113,9 @@ async function dmSend(mode) {
   } finally {
     // Unlock send button
     if (sendBtn) { delete sendBtn.dataset.sending; sendBtn.style.opacity = ''; sendBtn.disabled = false; }
-    input.focus();
+    // On mobile, don't re-focus — that's what causes the keyboard to drop and bounce back.
+    // The input already has focus; just leave it alone.
+    if (!isMobile()) input.focus();
   }
 }
 
