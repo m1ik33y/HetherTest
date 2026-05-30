@@ -1568,19 +1568,16 @@ body {
   color: var(--text3);
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
-/* Desktop hover — only on devices that support hover (not touch) */
-@media (hover: hover) {
-  .dm-bubble-wrap:hover .dm-reply-btn,
-  .dm-bubble-wrap:hover .dm-more-btn {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .dm-reply-btn:hover,
-  .dm-more-btn:hover {
-    background: var(--surface2);
-    color: var(--accent);
-    transform: scale(1.1);
-  }
+.dm-bubble-wrap:hover .dm-reply-btn,
+.dm-bubble-wrap:hover .dm-more-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.dm-reply-btn:hover,
+.dm-more-btn:hover {
+  background: var(--surface2);
+  color: var(--accent);
+  transform: scale(1.1);
 }
 .dm-reply-btn svg { width: 13px; height: 13px; }
 .dm-more-btn svg { width: 13px; height: 13px; }
@@ -1599,23 +1596,7 @@ body {
   vertical-align: top;
   position: relative;
 }
-@media (hover: hover) {
-  .dm-bubble:not(.dm-bubble-emoji-only):hover { opacity: 0.92; }
-}
-
-/* ── MOBILE TOUCH: no text selection/copy, no tap-active state on bubbles ── */
-@media (hover: none) {
-  .dm-bubble {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -webkit-touch-callout: none !important;
-  }
-  /* Buttons are invisible on mobile — shown only via long-press ctx menu */
-  .dm-reply-btn,
-  .dm-more-btn {
-    display: none !important;
-  }
-}
+.dm-bubble:not(.dm-bubble-emoji-only):hover { opacity: 0.92; }
 .dm-msg-group.sent .dm-bubble:not(.dm-bubble-emoji-only) { background:#495cea; color: #fff; }
 .dm-msg-group.received .dm-bubble:not(.dm-bubble-emoji-only) { background: var(--surface2); color: var(--text); border: none; }
 
@@ -1697,7 +1678,8 @@ body {
   margin-bottom: 14px;
 }
 
-.dm-bubble-wrap { overflow: visible !important; }
+.dm-bubble-wrap { overflow: visible !important; transition: transform 0.18s cubic-bezier(0.25,0.46,0.45,0.94); }
+.dm-bubble-wrap.swiping { transition: none; }
 .dm-msg-bubbles { overflow: visible !important; }
 .dm-msg-group { overflow: visible !important; }
 .dm-msg-group-row { overflow: visible !important; }
@@ -5853,6 +5835,64 @@ function _appendMediaToGroup(bubblesWrap, msg, isSent, contact, currentUserId) {
   bubblesWrap.appendChild(makeBubbleWrap(msg, isSent, contact, currentUserId));
 }
 
+// ── SWIPE-TO-REPLY (mobile) ──
+// Sent bubbles swipe LEFT, received bubbles swipe RIGHT — matching iMessage/WhatsApp.
+function addSwipeToReply(bWrap, isSent, onReply) {
+  const THRESHOLD = 52;   // px to trigger reply
+  const MAX_DRAG  = 72;   // px cap so it doesn't slide too far
+  let startX = 0, startY = 0, curX = 0, dragging = false, triggered = false, maybeSwipe = false;
+
+  bWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    curX = 0; triggered = false; maybeSwipe = false; dragging = false;
+  }, { passive: true });
+
+  bWrap.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    // First move: decide if this is a horizontal or vertical gesture
+    if (!dragging && !maybeSwipe) {
+      if (Math.abs(dy) > Math.abs(dx) + 4) return; // vertical scroll — ignore
+      maybeSwipe = true;
+    }
+    if (!maybeSwipe) return;
+
+    // Correct direction: sent → swipe left (dx < 0), received → swipe right (dx > 0)
+    const correct = isSent ? dx < 0 : dx > 0;
+    if (!correct && !dragging) return;
+
+    dragging = true;
+    e.preventDefault(); // stop scroll while doing horizontal swipe
+
+    const clamped = isSent
+      ? Math.max(-MAX_DRAG, Math.min(0, dx))
+      : Math.min(MAX_DRAG, Math.max(0, dx));
+    curX = clamped;
+    bWrap.classList.add('swiping');
+    bWrap.style.transform = `translateX(${curX}px)`;
+
+    if (!triggered && Math.abs(curX) >= THRESHOLD) {
+      triggered = true;
+      if (navigator.vibrate) navigator.vibrate(30);
+    }
+  }, { passive: false });
+
+  function endSwipe() {
+    if (!dragging) { bWrap.classList.remove('swiping'); return; }
+    dragging = false; maybeSwipe = false;
+    bWrap.classList.remove('swiping');
+    bWrap.style.transform = '';
+    if (triggered) onReply();
+  }
+
+  bWrap.addEventListener('touchend',    endSwipe, { passive: true });
+  bWrap.addEventListener('touchcancel', endSwipe, { passive: true });
+}
+
 function makeBubbleWrap(msg, isSent, contact, currentUserId) {
   const bWrap = document.createElement('div');
   bWrap.className = 'dm-bubble-wrap';
@@ -5924,104 +5964,14 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
 
   bubble.addEventListener('dblclick', (e) => { e.preventDefault(); addReaction(bWrap, '❤️'); });
   bubble.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    if (!isMobile()) showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
+    e.preventDefault(); showCtxMenu(e.clientX, e.clientY, bWrap, msg, isSent, contact);
   });
-
-  // ── MOBILE: long-press (1.8s) → context menu; directional swipe → reply on release; tap → nothing ──
-  (function attachMobileBubbleGestures(bubble, bWrap, msg, isSent, contact) {
-    let pressTimer    = null;
-    let touchStartX   = 0, touchStartY = 0;
-    let isTracking    = false;
-    let pastThreshold = false;
-    let aborted       = false;
-    let maxTravel     = 0; // computed once on touchstart from resting position
-
-    const LONG_PRESS_MS  = 1800;
-    const SWIPE_MAX_VERT = 28;
-    const SCREEN_MARGIN  = 16;
-    const swipeDir = isSent ? -1 : 1;
-
-    function cancelPress() {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-    }
-
-    function snapBack() {
-      bubble.style.transition = 'transform 0.35s cubic-bezier(0.22,1.6,0.36,1)';
-      bubble.style.transform  = '';
-    }
-
-    bubble.addEventListener('touchstart', (e) => {
-      if (!isMobile()) return;
-      const t = e.touches[0];
-      touchStartX   = t.clientX;
-      touchStartY   = t.clientY;
-      isTracking    = false;
-      pastThreshold = false;
-      aborted       = false;
-      bubble.style.transition = 'none';
-
-      // Hard cap: bubble slides max 80px regardless of screen space.
-      // For received (right): capped by space to right wall.
-      // For sent (left): capped by space to left wall, min 40px so gesture always feels physical.
-      const rect = bubble.getBoundingClientRect();
-      const naturalTravel = isSent
-        ? rect.left - SCREEN_MARGIN
-        : window.innerWidth - rect.right - SCREEN_MARGIN;
-      const minTravel = isSent ? 40 : 0;
-      maxTravel = Math.min(Math.max(naturalTravel, minTravel), 80);
-
-      pressTimer = setTimeout(() => {
-        if (isTracking) return;
-        cancelPress();
-        if (navigator.vibrate) navigator.vibrate(45);
-        showCtxMenu(touchStartX, touchStartY, bWrap, msg, isSent, contact);
-      }, LONG_PRESS_MS);
-    }, { passive: true });
-
-    bubble.addEventListener('touchmove', (e) => {
-      if (!isMobile() || aborted) return;
-      const t     = e.touches[0];
-      const rawDx = t.clientX - touchStartX;
-      const dy    = Math.abs(t.clientY - touchStartY);
-      const dx    = rawDx * swipeDir; // positive = swiping in correct direction
-
-      if (Math.abs(rawDx) > 6 || dy > 6) cancelPress();
-
-      if (dy > SWIPE_MAX_VERT) { aborted = true; snapBack(); return; }
-
-      if (dx <= 0) {
-        if (isTracking) {
-          bubble.style.transition = 'none';
-          bubble.style.transform  = '';
-        }
-        return;
-      }
-
-      isTracking = true;
-
-      const clampedDx = Math.min(dx, maxTravel);
-      bubble.style.transform = `translateX(${clampedDx * swipeDir}px)`;
-
-      // Arm once and stay armed — any swipe >6px on release triggers reply
-      if (clampedDx > 6) pastThreshold = true;
-    }, { passive: true });
-
-    function onTouchEnd() {
-      if (!isMobile()) return;
-      cancelPress();
-      if (!aborted && pastThreshold) {
-        startReply(bWrap.dataset.text, bWrap.dataset.sender);
-      }
-      snapBack();
-    }
-
-    bubble.addEventListener('touchend',    onTouchEnd, { passive: true });
-    bubble.addEventListener('touchcancel', onTouchEnd, { passive: true });
-  })(bubble, bWrap, msg, isSent, contact);
 
   if (isSent) { bWrap.appendChild(moreBtn); bWrap.appendChild(replyBtn); bWrap.appendChild(bubble); }
   else { bWrap.appendChild(bubble); bWrap.appendChild(replyBtn); bWrap.appendChild(moreBtn); }
+
+  // Mobile swipe-to-reply
+  addSwipeToReply(bWrap, isSent, () => startReply(msgText, msgSender));
 
   // Render existing reactions from DB data and seed the cache
   if (msg.reactions && Object.keys(msg.reactions).length > 0) {
@@ -7074,6 +7024,9 @@ async function dmSend(mode) {
   bubble.appendChild(spin);
 
   bWrap.appendChild(moreBtnOpt); bWrap.appendChild(replyBtnOpt); bWrap.appendChild(bubble);
+
+  // Mobile swipe-to-reply for optimistic bubble
+  addSwipeToReply(bWrap, true, () => startReply(text, 'You'));
 
   // Only show optimistic text bubble if there's actual text
   if (!text) {
