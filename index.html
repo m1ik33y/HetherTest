@@ -5961,11 +5961,16 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
       aborted       = false;
       bubble.style.transition = 'none';
 
-      // Capture resting position ONCE — used to clamp travel without feedback loop
+      // Max travel: how far the bubble can slide before its leading edge hits the screen margin.
+      // For received (slides right): space from right edge to right wall.
+      // For sent     (slides left):  space from left edge to left wall.
+      // For very wide bubbles that leave little room, we floor at 30% of screen so
+      // the gesture is always usable.
       const rect = bubble.getBoundingClientRect();
-      maxTravel = isSent
+      const naturalTravel = isSent
         ? rect.left - SCREEN_MARGIN
         : window.innerWidth - rect.right - SCREEN_MARGIN;
+      maxTravel = Math.max(naturalTravel, window.innerWidth * 0.30);
       maxTravel = Math.max(maxTravel, 0);
 
       pressTimer = setTimeout(() => {
