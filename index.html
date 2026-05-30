@@ -5994,18 +5994,16 @@ function makeBubbleWrap(msg, isSent, contact, currentUserId) {
         if (isTracking) {
           bubble.style.transition = 'none';
           bubble.style.transform  = '';
-          pastThreshold = false;
         }
         return;
       }
 
       isTracking = true;
 
-      // Clamp to pre-captured max travel so bubble edge never leaves the screen
       const clampedDx = Math.min(dx, maxTravel);
-
       bubble.style.transform = `translateX(${clampedDx * swipeDir}px)`;
 
+      // Arm once and stay armed — any swipe >6px on release triggers reply
       if (clampedDx > 6) pastThreshold = true;
     }, { passive: true });
 
