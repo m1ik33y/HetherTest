@@ -5125,8 +5125,8 @@ function dmOverlayClick(e) { if (e.target === document.getElementById('dmOverlay
 function buildDMConvList() {
   const withSentMessages = dmContacts.filter(c => c.sentByMe === true);
   const sorted = [...withSentMessages].sort((a, b) => {
-    const aUnread = a.unread && a.id !== activeDmId ? 1 : 0;
-    const bUnread = b.unread && b.id !== activeDmId ? 1 : 0;
+    const aUnread = a.unread && !(a.id === activeDmId && _isChatVisibleFor(a.id)) ? 1 : 0;
+    const bUnread = b.unread && !(b.id === activeDmId && _isChatVisibleFor(b.id)) ? 1 : 0;
     if (bUnread !== aUnread) return bUnread - aUnread;
     return (b.lastMessageTs || 0) - (a.lastMessageTs || 0);
   });
@@ -5150,7 +5150,7 @@ function buildDMConvList() {
       item.dataset.id = c.id;
       item.onclick = () => { isFsList ? openFsChat(c.id) : openDesktopChat(c.id); };
       const lastMsg = c.lastMessage;
-      const isUnread = c.unread && c.id !== activeDmId;
+      const isUnread = c.unread && !(c.id === activeDmId && _isChatVisibleFor(c.id));
       const unreadCount = isUnread ? (c.unreadCount || 0) : 0;
 
       // Build preview text
@@ -9988,12 +9988,17 @@ function _isChatVisibleFor(userId) {
 }
 
 function _updateTitleUnreadBadge() {
-  if (!_notificationsEnabled || !_isDMPanelOpen()) {
+  if (!_notificationsEnabled) {
     document.title = 'Hether - Coding Platform';
     return;
   }
   const unreadUsers = (typeof dmContacts !== 'undefined')
-    ? dmContacts.filter(c => c.unread && c.id !== activeDmId).length
+    ? dmContacts.filter(c => {
+        if (!c.unread) return false;
+        // Only exclude the active chat if user can actually see it right now
+        if (c.id === activeDmId && _isChatVisibleFor(c.id)) return false;
+        return true;
+      }).length
     : 0;
   if (unreadUsers <= 0) {
     document.title = 'Hether - Coding Platform';
