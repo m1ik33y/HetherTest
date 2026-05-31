@@ -3610,50 +3610,110 @@ const subscriptionManager = {
 };
 
 // ── PRESENCE SYSTEM ──
-let presenceChannel = null;
+// Uses broadcast heartbeats instead of Supabase Presence to get instant
+// online/offline detection. Each user pings their own channel every 5s while
+// the DM panel is open. Watchers clear the dot after 10s of no ping.
+let presenceChannel = null;       // my outgoing heartbeat channel
 let onlineUsers = new Set();
+let _presenceWatchChannels = {};  // userId -> { channel, timer }
+let _heartbeatInterval = null;
 
 async function joinPresence() {
   if (!currentUser) return;
+
+  // Clean up any old channel
   if (presenceChannel) {
     await supabaseClient.removeChannel(presenceChannel);
     presenceChannel = null;
   }
+  if (_heartbeatInterval) { clearInterval(_heartbeatInterval); _heartbeatInterval = null; }
 
-  presenceChannel = supabaseClient.channel('admin-dm-presence', {
-    config: { presence: { key: currentUser.id } }
+  // Broadcast my heartbeat on my own personal channel
+  presenceChannel = supabaseClient.channel(`presence-hb:${currentUser.id}`, {
+    config: { broadcast: { self: false } }
   });
-
-  presenceChannel
-    .on('presence', { event: 'sync' }, () => {
-      const state = presenceChannel.presenceState();
-      onlineUsers.clear();
-      Object.keys(state).forEach(key => { onlineUsers.add(key); });
-      updatePresenceDots();
-    })
-    .on('presence', { event: 'join' }, ({ key }) => { onlineUsers.add(key); updatePresenceDots(); })
-    .on('presence', { event: 'leave' }, ({ key }) => {
-      onlineUsers.delete(key);
-      updatePresenceDots();
-      // If the user who left is who we're currently chatting with,
-      // immediately clear any typing indicator — they're offline now.
-      if (key === activeDmId) {
-        hideRemoteTyping();
-      }
-    })
-    .subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
-      }
-    });
+  presenceChannel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      // Send first ping immediately
+      presenceChannel.send({ type: 'broadcast', event: 'hb', payload: {} });
+      // Then every 5s
+      _heartbeatInterval = setInterval(() => {
+        if (presenceChannel?.state === 'joined') {
+          presenceChannel.send({ type: 'broadcast', event: 'hb', payload: {} });
+        }
+      }, 5000);
+    }
+  });
 }
 
 async function leavePresence() {
+  if (_heartbeatInterval) { clearInterval(_heartbeatInterval); _heartbeatInterval = null; }
   if (presenceChannel) {
-    try { await presenceChannel.untrack(); } catch(e) {}
+    // Send an explicit "offline" ping so the watcher clears instantly
+    if (presenceChannel.state === 'joined') {
+      presenceChannel.send({ type: 'broadcast', event: 'offline', payload: {} });
+      // Give it a moment to send before removing the channel
+      await new Promise(r => setTimeout(r, 80));
+    }
     await supabaseClient.removeChannel(presenceChannel);
     presenceChannel = null;
   }
+  onlineUsers.clear();
+  updatePresenceDots();
+}
+
+// Watch a specific user's heartbeat channel. Called when we open a chat or load contacts.
+function watchUserPresence(userId) {
+  if (!userId || _presenceWatchChannels[userId]) return;
+
+  const ch = supabaseClient.channel(`presence-hb:${userId}`, {
+    config: { broadcast: { self: false } }
+  });
+
+  let offlineTimer = null;
+  function markOffline() {
+    onlineUsers.delete(userId);
+    updatePresenceDots();
+    if (userId === activeDmId) hideRemoteTyping();
+    offlineTimer = null;
+  }
+  function resetTimer() {
+    if (offlineTimer) clearTimeout(offlineTimer);
+    // If no ping in 10s → offline
+    offlineTimer = setTimeout(markOffline, 10000);
+  }
+
+  ch.on('broadcast', { event: 'hb' }, () => {
+    const wasOffline = !onlineUsers.has(userId);
+    onlineUsers.add(userId);
+    if (wasOffline) updatePresenceDots();
+    resetTimer();
+  })
+  .on('broadcast', { event: 'offline' }, () => {
+    if (offlineTimer) { clearTimeout(offlineTimer); offlineTimer = null; }
+    onlineUsers.delete(userId);
+    updatePresenceDots();
+    // If this is the active chat partner, clear their typing indicator immediately
+    if (userId === activeDmId) hideRemoteTyping();
+  })
+  .subscribe();
+
+  _presenceWatchChannels[userId] = { channel: ch, timer: null,
+    clearTimer: () => { if (offlineTimer) { clearTimeout(offlineTimer); offlineTimer = null; } }
+  };
+}
+
+function unwatchUserPresence(userId) {
+  const entry = _presenceWatchChannels[userId];
+  if (!entry) return;
+  entry.clearTimer();
+  supabaseClient.removeChannel(entry.channel);
+  delete _presenceWatchChannels[userId];
+  onlineUsers.delete(userId);
+}
+
+function unwatchAllPresence() {
+  Object.keys(_presenceWatchChannels).forEach(unwatchUserPresence);
   onlineUsers.clear();
   updatePresenceDots();
 }
@@ -5045,6 +5105,7 @@ async function closeDM() {
   // Also dismiss the admin overlay UI in case it was open simultaneously
   _dismissAdminOverlay();
   await leavePresence();
+  unwatchAllPresence();
   activeDmId = null;
   document.getElementById('dmOverlay').classList.remove('show');
   document.getElementById('dmFullscreen').classList.remove('show');
@@ -5180,6 +5241,8 @@ async function loadContacts() {
     });
     colorIdx++;
   });
+  // Start watching heartbeat channels for all contacts so presence dots update in real time
+  dmContacts.forEach(c => watchUserPresence(c.id));
 }
 
 function showDmEmptyState() {
