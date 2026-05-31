@@ -3264,7 +3264,7 @@ body {
               <button class="emoji-btn" id="dmEmojiBtn" onclick="toggleEmojiPicker('dm')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
               </button>
-              <textarea id="dmInput" placeholder="Message…" oninput="onDmInputChange('desktop'); autoResizeDm(this)" onfocus="onDmInputFocus('desktop')" onblur="onDmInputBlur('desktop')" onkeydown="onDmKeypress('desktop'); dmHandleKey(event,'desktop')" onpaste="handleDmPaste(event,'desktop')" rows="1"></textarea>
+              <textarea id="dmInput" placeholder="Message…" oninput="onDmInputChange('desktop'); autoResizeDm(this)" onfocus="onDmInputFocus('desktop')" onblur="onDmInputBlur('desktop')" onkeydown="onDmKeypress(event,'desktop'); dmHandleKey(event,'desktop')" onpaste="handleDmPaste(event,'desktop')" rows="1"></textarea>
               <label class="emoji-btn" id="dmMediaBtn" for="dmMediaUpload" title="Send media">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
               </label>
@@ -3398,7 +3398,7 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </label>
         <input type="file" id="dmFsMediaUpload" accept="image/*,video/*" style="display:none" onchange="stageDmMedia(event,'mobile')">
-        <textarea id="dmFsInput" placeholder="Message…" oninput="onDmInputChange('mobile'); toggleDmFsSendBtn(); autoResizeDm(this)" onfocus="onDmInputFocus('mobile')" onblur="onDmInputBlur('mobile')" onkeydown="onDmKeypress('mobile'); dmHandleKey(event,'mobile')" onpaste="handleDmPaste(event,'mobile')" rows="1"></textarea>
+        <textarea id="dmFsInput" placeholder="Message…" oninput="onDmInputChange('mobile'); toggleDmFsSendBtn(); autoResizeDm(this)" onfocus="onDmInputFocus('mobile')" onblur="onDmInputBlur('mobile')" onkeydown="onDmKeypress(event,'mobile'); dmHandleKey(event,'mobile')" onpaste="handleDmPaste(event,'mobile')" rows="1"></textarea>
         <button class="dm-send-btn" id="dmFsSendBtn" onmousedown="event.preventDefault()" ontouchend="event.preventDefault(); dmSend('mobile')" onclick="if(!('ontouchstart' in window)) dmSend('mobile')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -3632,7 +3632,15 @@ async function joinPresence() {
       updatePresenceDots();
     })
     .on('presence', { event: 'join' }, ({ key }) => { onlineUsers.add(key); updatePresenceDots(); })
-    .on('presence', { event: 'leave' }, ({ key }) => { onlineUsers.delete(key); updatePresenceDots(); })
+    .on('presence', { event: 'leave' }, ({ key }) => {
+      onlineUsers.delete(key);
+      updatePresenceDots();
+      // If the user who left is who we're currently chatting with,
+      // immediately clear any typing indicator — they're offline now.
+      if (key === activeDmId) {
+        hideRemoteTyping();
+      }
+    })
     .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await presenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
@@ -3677,8 +3685,10 @@ function resetPresenceDots() {
 let typingChannel = null;
 let isCurrentlyTyping = false;
 let remoteTypingTimer = null;
+let typingHeartbeatInterval = null; // re-broadcasts isTyping=true every 3s while typing
 
 async function setupTypingChannel(myUserId, otherUserId) {
+  if (typingHeartbeatInterval) { clearInterval(typingHeartbeatInterval); typingHeartbeatInterval = null; }
   if (typingChannel) {
     await supabaseClient.removeChannel(typingChannel);
     typingChannel = null;
@@ -3722,6 +3732,14 @@ async function setupTypingChannel(myUserId, otherUserId) {
 }
 
 function showRemoteTyping(userId) {
+  // Reset the auto-clear timer on every typing event so it only fires
+  // if the remote side stops sending heartbeats (e.g. goes offline, closes panel)
+  if (remoteTypingTimer) clearTimeout(remoteTypingTimer);
+  remoteTypingTimer = setTimeout(() => {
+    hideRemoteTyping();
+    remoteTypingTimer = null;
+  }, 4000);
+
   const indicatorHtml = `<div class="dm-typing-bubble"><span></span><span></span><span></span></div>`;
 
   ['dmChatMessages', 'dmFsMessages'].forEach(msgsId => {
@@ -3754,6 +3772,7 @@ function showRemoteTyping(userId) {
 }
 
 function hideRemoteTyping() {
+  if (remoteTypingTimer) { clearTimeout(remoteTypingTimer); remoteTypingTimer = null; }
   ['dmChatMessages', 'dmFsMessages'].forEach(msgsId => {
     const msgs = document.getElementById(msgsId);
     if (!msgs) return;
@@ -3786,13 +3805,35 @@ function broadcastTyping(isTyping) {
     if (isTyping) typingChannel._pendingTyping = true;
     return;
   }
-  typingChannel.send({ type: 'broadcast', event: 'typing', payload: { userId: currentUser.id, isTyping } });
+  const payload = { userId: currentUser.id, isTyping };
+  typingChannel.send({ type: 'broadcast', event: 'typing', payload });
+  // Also notify the recipient's global typing-sidebar channel so they see
+  // "Typing…" in the conv list even if they're currently in a different chat
+  const recipientChannel = supabaseClient.channel(`typing-notify:${activeDmId}`);
+  recipientChannel.send({ type: 'broadcast', event: 'typing', payload });
+
+  // Heartbeat: while actively typing, re-broadcast isTyping=true every 3s so
+  // the remote side's 4s stale-timer keeps resetting. When stopped, cancel it.
+  if (isTyping) {
+    if (!typingHeartbeatInterval) {
+      typingHeartbeatInterval = setInterval(() => {
+        if (!isCurrentlyTyping) { clearInterval(typingHeartbeatInterval); typingHeartbeatInterval = null; return; }
+        const p = { userId: currentUser.id, isTyping: true };
+        if (typingChannel?.state === 'joined') typingChannel.send({ type: 'broadcast', event: 'typing', payload: p });
+      }, 3000);
+    }
+  } else {
+    if (typingHeartbeatInterval) { clearInterval(typingHeartbeatInterval); typingHeartbeatInterval = null; }
+  }
 }
 
 function onDmInputChange(mode) {
   toggleDmSendBtn();
-  const inputEl = document.getElementById(mode === 'mobile' ? 'dmFsInput' : 'dmInput');
-  const val = inputEl ? inputEl.value : '';
+  const expectedInputId = mode === 'mobile' ? 'dmFsInput' : 'dmInput';
+  const inputEl = document.getElementById(expectedInputId);
+  // Only act if the element that fired is actually the focused DM input
+  if (!inputEl || document.activeElement !== inputEl) return;
+  const val = inputEl.value;
   if (val.trim() === '' && isCurrentlyTyping) {
     isCurrentlyTyping = false;
     broadcastTyping(false);
@@ -3808,7 +3849,18 @@ function onDmInputBlur(mode) {
   }
 }
 
-function onDmKeypress(mode) {
+function onDmKeypress(e, mode) {
+  // Safety guard: only fire when the correct DM input is actually focused.
+  // This prevents the admin panel (or any other input) from accidentally
+  // triggering a typing broadcast when it receives keyboard events.
+  const expectedInputId = mode === 'mobile' ? 'dmFsInput' : 'dmInput';
+  if (document.activeElement?.id !== expectedInputId) return;
+
+  // Backspace is handled by onDmInputChange (stops typing when input becomes empty)
+  // Don't send isTyping=false here — that fires even on a focused empty input
+  if (e.key === 'Backspace' || e.key === 'Delete') return;
+  // Only trigger on printable characters (letters, symbols, space, etc.)
+  if (e.key.length !== 1) return;
   if (!isCurrentlyTyping) {
     isCurrentlyTyping = true;
     broadcastTyping(true);
@@ -3816,6 +3868,7 @@ function onDmKeypress(mode) {
 }
 
 function stopTypingBroadcast() {
+  if (typingHeartbeatInterval) { clearInterval(typingHeartbeatInterval); typingHeartbeatInterval = null; }
   isCurrentlyTyping = false;
   broadcastTyping(false);
 }
@@ -4579,6 +4632,8 @@ function _dismissAdminOverlay() {
 function closeAdminPopup() {
   _adminSessionValid = false;
   adminAuthenticated = false;
+  // Stop any active typing broadcast so the remote side doesn't get stuck showing "Typing…"
+  if (isCurrentlyTyping) stopTypingBroadcast();
   document.getElementById('dmProfileTab')?.classList.remove('show');
   _dismissAdminOverlay();
 }
@@ -4924,6 +4979,58 @@ async function openDM() {
         .subscribe();
       // Store so we can remove on close
       window._dmGlobalChannel = globalCh;
+      // ── GLOBAL TYPING SIDEBAR ──
+      // Subscribe to typing notifications directed at this user from ANY contact.
+      // This lets the sidebar show "Typing…" even when you're in a different chat.
+      // Each user broadcasts to `typing-notify:{recipientId}` so we only need one channel here.
+      const globalTypingCh = supabaseClient.channel(`typing-notify:${user.id}`, {
+        config: { broadcast: { self: false } }
+      });
+      globalTypingCh
+        .on('broadcast', { event: 'typing' }, ({ payload }) => {
+          const senderId = payload.userId;
+          if (!senderId) return;
+          if (payload.isTyping) {
+            // Show in sidebar regardless of active chat
+            ['dmConvList', 'dmFsConvList'].forEach(listId => {
+              const list = document.getElementById(listId);
+              if (!list) return;
+              const item = list.querySelector(`.dm-conv-item[data-id="${senderId}"]`);
+              if (!item) return;
+              const preview = item.querySelector('.dm-conv-preview');
+              if (preview && !preview.classList.contains('typing')) {
+                preview.dataset.prevText = preview.textContent;
+                preview.dataset.prevClass = preview.className;
+                preview.className = 'dm-conv-preview typing';
+                preview.textContent = 'Typing\u2026';
+              }
+            });
+            // Also show in-chat typing indicator if this is the active chat
+            if (senderId === activeDmId) showRemoteTyping(senderId);
+          } else {
+            // If it's the active chat, use the full hide
+            if (senderId === activeDmId) {
+              hideRemoteTyping();
+            } else {
+              // Otherwise just restore the sidebar preview
+              ['dmConvList', 'dmFsConvList'].forEach(listId => {
+                const list = document.getElementById(listId);
+                if (!list) return;
+                const item = list.querySelector(`.dm-conv-item[data-id="${senderId}"]`);
+                if (!item) return;
+                const preview = item.querySelector('.dm-conv-preview.typing');
+                if (preview) {
+                  preview.className = preview.dataset.prevClass || 'dm-conv-preview';
+                  preview.textContent = preview.dataset.prevText || '';
+                  delete preview.dataset.prevText;
+                  delete preview.dataset.prevClass;
+                }
+              });
+            }
+          }
+        })
+        .subscribe();
+      window._dmGlobalTypingChannel = globalTypingCh;
       // Start the persistent seen-updates channel for this user
       await startSeenChannel(user.id);
     }
@@ -4945,6 +5052,7 @@ async function closeDM() {
   closeMsgActionMenu(); hideRemoteTyping(); stopTypingBroadcast(); resetPresenceDots();
   if (typingChannel) { await supabaseClient.removeChannel(typingChannel); typingChannel = null; }
   if (window._dmGlobalChannel) { await supabaseClient.removeChannel(window._dmGlobalChannel); window._dmGlobalChannel = null; }
+  if (window._dmGlobalTypingChannel) { await supabaseClient.removeChannel(window._dmGlobalTypingChannel); window._dmGlobalTypingChannel = null; }
   await stopSeenChannel();
   await subscriptionManager.replaceSubscription(null);
 }
@@ -5100,6 +5208,8 @@ async function openDesktopChat(id) {
   if (!contact) return;
   contact.unread = false;
   contact.unreadCount = 0;
+  // Clear any leftover remote typing indicator from the previous chat
+  hideRemoteTyping();
   document.getElementById('dmProfileTab')?.classList.remove('show');
   activeDmId = id;
 
@@ -6885,6 +6995,8 @@ async function openFsChat(id) {
   if (!contact) return;
   contact.unread = false;
   contact.unreadCount = 0;
+  // Clear any leftover remote typing indicator from the previous chat
+  hideRemoteTyping();
   activeDmId = id;
 
   // FIX 1: fs avatar
@@ -7338,11 +7450,6 @@ function addAccount() { closeProfileDropdown(); alert('Add account flow — inte
 function logOut() { closeProfileDropdown(); document.getElementById('logoutOverlay').classList.add('show'); }
 function closeLogout() { document.getElementById('logoutOverlay').classList.remove('show'); }
 async function confirmLogout() {
-  // Wipe admin auth flags before anything else — no path leaves these true after logout
-  adminAuthenticated = false;
-  _adminSessionValid = false;
-  _dismissAdminOverlay();
-  if (dmOpen) await closeDM();
   await supabaseClient.auth.signOut();
   profile = { name: 'User', username: '@user', email: 'user@example.com', avatarUrl: null };
   renderProfileEverywhere();
