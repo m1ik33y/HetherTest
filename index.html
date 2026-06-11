@@ -7658,7 +7658,8 @@ async function openDesktopChat(id) {
   if (currentEditState) { currentEditState = null; document.getElementById('dmEditBar')?.classList.remove('show'); document.getElementById('dmFsEditBar')?.classList.remove('show'); }
   clearDmStaging();
   document.getElementById('dmInput').focus();
-  markConversationSeen(id);
+  // Messages are now rendered and scroll is at bottom — mark seen immediately
+  if (_isChatVisibleFor(id)) markConversationSeen(id);
 }
 
 async function openNicknamePanel() {
@@ -9068,11 +9069,15 @@ async function loadMessages(userId, loadToken) {
   // Reveal messages and hide loading bar
   _hideLoadBar();
 
-  // Scroll listener for pagination
+  // Scroll listener for pagination + seen-on-scroll-to-bottom
   msgsEl.onscroll = null;
   msgsEl.onscroll = () => {
     if (msgsEl.scrollTop < 80 && !dmDesktopLoadingMore && !dmDesktopAllLoaded) {
       loadMoreMessagesDesktop();
+    }
+    // Mark seen when user scrolls to the bottom of the conversation
+    if (_isChatVisibleFor(userId)) {
+      markConversationSeen(userId).then(() => fixSeenLabels(msgsEl));
     }
   };
 
@@ -9089,8 +9094,7 @@ async function loadMessages(userId, loadToken) {
           appendIncomingMessage(msgsEl, newMsg, user.id, dmDesktopContact);
           updateContactLastMsg(userId, newMsg, user.id);
           buildDMConvList();
-          // Only mark as seen if the tab is actually visible & focused.
-          // If the user is in another tab, treat it like any other unread message.
+          // Mark seen only if user is scrolled to the bottom (can actually see the message)
           if (_isChatVisibleFor(userId)) {
             markConversationSeen(userId).then(() => fixSeenLabels(msgsEl));
           } else {
@@ -9339,6 +9343,10 @@ async function loadFsMessages(userId) {
     if (msgsEl.scrollTop < 80 && !dmMobileLoadingMore && !dmMobileAllLoaded) {
       loadMoreMessagesMobile();
     }
+    // Mark seen when user scrolls to the bottom of the conversation
+    if (_isChatVisibleFor(userId)) {
+      markConversationSeen(userId).then(() => fixSeenLabels(msgsEl));
+    }
   };
 
   try {
@@ -9353,7 +9361,7 @@ async function loadFsMessages(userId) {
           appendIncomingMessage(msgsEl, newMsg, user.id, dmMobileContact);
           updateContactLastMsg(userId, newMsg, user.id);
           buildDMConvList();
-          // Only mark as seen if the tab is actually visible & focused.
+          // Mark seen only if user is scrolled to the bottom (can actually see the message)
           if (_isChatVisibleFor(userId)) {
             markConversationSeen(userId).then(() => fixSeenLabels(msgsEl));
           } else {
@@ -9680,7 +9688,8 @@ async function openFsChat(id) {
   cancelReply('mobile'); clearDmFsStaging();
   if (currentEditState) { currentEditState = null; document.getElementById('dmEditBar')?.classList.remove('show'); document.getElementById('dmFsEditBar')?.classList.remove('show'); }
   document.getElementById('dmFsInput').focus();
-  markConversationSeen(id);
+  // loadFsMessages is async — wait a tick so messages render then check scroll position
+  setTimeout(() => { if (_isChatVisibleFor(id)) markConversationSeen(id); }, 300);
 }
 
 function dmFsBack() {
@@ -12977,7 +12986,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     _ghostTrigger();
   } else if (document.visibilityState === 'visible' && dmOpen && activeDmId) {
-    markConversationSeen(activeDmId);
+    if (_isChatVisibleFor(activeDmId)) markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
     const contact = dmContacts ? dmContacts.find(c => c.id === activeDmId) : null;
     if (contact) { contact.unread = false; contact.unreadCount = 0; }
@@ -12992,7 +13001,7 @@ window.addEventListener('blur', () => { _ghostTrigger(); });
 
 window.addEventListener('focus', () => {
   if (dmOpen && activeDmId) {
-    markConversationSeen(activeDmId);
+    if (_isChatVisibleFor(activeDmId)) markConversationSeen(activeDmId);
     if (_seenMyUserId) pollSeenStatus(_seenMyUserId);
     const contact = dmContacts ? dmContacts.find(c => c.id === activeDmId) : null;
     if (contact) { contact.unread = false; contact.unreadCount = 0; }
@@ -13158,12 +13167,27 @@ function _isDMPanelOpen() {
       || (dmFs && dmFs.classList.contains('show'));
 }
 
-// Returns true only if the chat with `userId` is open AND the tab is
-// currently focused/visible — i.e. the user can actually see the messages.
+// Returns true if the chat scroll container is scrolled to (or near) the bottom.
+// "Near" = within 80px, same threshold used for pagination at the top.
+function _isChatScrolledToBottom() {
+  for (const id of ['dmFsMessages', 'dmChatMessages']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    // Only check the container that is actually visible
+    if (el.offsetParent === null && el.closest('.dm-loading') === null) continue;
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return distFromBottom <= 80;
+  }
+  return true; // no container found — assume bottom
+}
+
+// Returns true only if the chat with `userId` is open, the tab is visible,
+// AND the user has scrolled to the bottom of the conversation.
 function _isChatVisibleFor(userId) {
   if (!userId || activeDmId !== userId) return false;
   if (!_isDMPanelOpen()) return false;
-  return document.visibilityState === 'visible' && document.hasFocus();
+  if (document.visibilityState !== 'visible') return false;
+  return _isChatScrolledToBottom();
 }
 
 function _updateTitleUnreadBadge() {
