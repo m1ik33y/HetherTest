@@ -2032,6 +2032,37 @@ kbd {
   align-items: flex-start;
 }
 
+/* ── SEEN LABEL (Instagram-style) ── */
+.dm-seen-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+  padding: 2px 2px 4px;
+  margin-top: 1px;
+}
+.dm-seen-avatar {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface2);
+}
+.dm-seen-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dm-seen-avatar svg { width: 100%; height: 100%; }
+.dm-seen-text {
+  font-size: 10.5px;
+  color: var(--text3);
+  font-weight: 400;
+  line-height: 1;
+}
+
 /* ── CHAT PANEL ── */
 .dm-chat-panel {
   flex: 1;
@@ -6819,20 +6850,31 @@ function applySeen(updatedId, myUserId) {
     .filter(Boolean);
 
   containers.forEach(msgsEl => {
-    // Try to find the bubble-outer for the referenced message ID
-    let outer = msgsEl.querySelector(`.dm-bubble-outer[data-msg-id="${updatedId}"]`);
-    if (!outer) {
+    // updatedId is the last message from ME (the sender) that the other user has read.
+    // Look for it anywhere in the DOM — it will be in a .sent group on my screen.
+    let seenOuter = msgsEl.querySelector(`.dm-bubble-outer[data-msg-id="${updatedId}"]`);
+    if (!seenOuter) {
       const wrap = msgsEl.querySelector(`.dm-bubble-wrap[data-msg-id="${updatedId}"]`);
-      if (wrap) outer = wrap.closest('.dm-bubble-outer') || wrap.parentElement;
+      if (wrap) seenOuter = wrap.closest('.dm-bubble-outer') || wrap.parentElement;
     }
 
-    if (outer) {
-      // Found: mark this message and all earlier sent messages as seen
-      const allSentOuters = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer')];
-      let found = false;
+    const allSentOuters = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer')];
+
+    if (seenOuter) {
+      // Mark this bubble and every earlier sent bubble as seen.
+      // Walk backwards through sent outers; once we hit the matching one, mark it and everything before it.
+      let marking = false;
       for (let i = allSentOuters.length - 1; i >= 0; i--) {
-        if (allSentOuters[i] === outer) found = true;
-        if (found) allSentOuters[i].dataset.seen = 'true';
+        if (allSentOuters[i] === seenOuter || allSentOuters[i].dataset.msgId === updatedId) marking = true;
+        if (marking) allSentOuters[i].dataset.seen = 'true';
+      }
+      // If seenOuter was found but isn't in allSentOuters (shouldn't happen, but safety net):
+      // mark all sent outers seen — updatedId being present at all means the other user read up to here.
+      if (!marking) {
+        allSentOuters.forEach(o => { o.dataset.seen = 'true'; });
+        msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => {
+          o.dataset.seen = 'true';
+        });
       }
     } else {
       // The specific bubble isn't in the DOM (pagination, older load).
@@ -6840,20 +6882,14 @@ function applySeen(updatedId, myUserId) {
       // everything visible — determined by checking if no rendered sent bubble
       // has an id > updatedId. Since IDs are UUIDs (time-ordered v7/v4) we
       // compare lexicographically which works for ULIDs / UUIDv7.
-      // For safety we just mark all seen if we can't find it, which is the
-      // correct behaviour when the reader has seen everything up to the latest.
-      const allSentOuters = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer[data-msg-id]')];
-      // If there are no rendered ids newer than updatedId, mark all as seen.
-      const anyNewer = allSentOuters.some(o => (o.dataset.msgId || '') > updatedId);
+      const allSentOutersWithId = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer[data-msg-id]')];
+      const anyNewer = allSentOutersWithId.some(o => (o.dataset.msgId || '') > updatedId);
       if (!anyNewer) {
         allSentOuters.forEach(o => { o.dataset.seen = 'true'; });
-        // Also catch outers without data-msg-id (optimistic bubbles not yet confirmed)
         msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => {
           o.dataset.seen = 'true';
         });
       }
-      // If anyNewer is true, the read pointer is older than some rendered messages —
-      // we don't have the exact bubble to anchor to, so skip to avoid over-marking.
     }
     fixSeenLabels(msgsEl);
   });
@@ -8048,21 +8084,20 @@ function fixSeenLabels(container) {
   // Remove any existing seen label
   container.querySelectorAll('.dm-seen-row').forEach(el => el.remove());
 
-  // Find all sent dm-bubble-outer elements that are marked seen
+  // Find the last sent dm-msg-group that has at least one seen bubble-outer
   const sentGroups = [...container.querySelectorAll('.dm-msg-group.sent')];
-  // Flatten into individual bubble-outers in DOM order
-  let lastSeenOuter = null;
+  let lastSeenGroup = null;
   for (let g = sentGroups.length - 1; g >= 0; g--) {
-    const outers = [...sentGroups[g].querySelectorAll('.dm-bubble-outer')];
+    const outers = sentGroups[g].querySelectorAll('.dm-bubble-outer');
     for (let i = outers.length - 1; i >= 0; i--) {
       if (outers[i].dataset.seen === 'true') {
-        lastSeenOuter = outers[i];
+        lastSeenGroup = sentGroups[g];
         break;
       }
     }
-    if (lastSeenOuter) break;
+    if (lastSeenGroup) break;
   }
-  if (!lastSeenOuter) return;
+  if (!lastSeenGroup) return;
 
   // Build the seen row
   const seenRow = document.createElement('div');
@@ -8084,8 +8119,8 @@ function fixSeenLabels(container) {
   seenRow.appendChild(avatarEl);
   seenRow.appendChild(seenText);
 
-  // Insert after the last seen outer
-  lastSeenOuter.insertAdjacentElement('afterend', seenRow);
+  // Insert after the last seen group (at the same level as dm-msg-group elements)
+  lastSeenGroup.insertAdjacentElement('afterend', seenRow);
 }
 
 // ── LOAD SEEN STATE FROM DB ──
