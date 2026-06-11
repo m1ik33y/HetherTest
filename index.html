@@ -6845,50 +6845,50 @@ let _seenMyUserId = null; // Stored so polling can use it
 
 // Apply a seen update for a specific message ID to all active chat containers
 function applySeen(updatedId, myUserId) {
+  if (!updatedId) return;
   const containers = ['dmChatMessages', 'dmFsMessages']
     .map(id => document.getElementById(id))
     .filter(Boolean);
 
+  if (containers.length === 0) {
+    console.warn('[seen] applySeen: no chat containers in DOM');
+    return;
+  }
+
   containers.forEach(msgsEl => {
-    // updatedId is the last message from ME (the sender) that the other user has read.
-    // Look for it anywhere in the DOM — it will be in a .sent group on my screen.
+    const allSentOuters = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer')];
+
+    // Try to find the specific bubble by ID (should be in .sent on the sender's screen)
     let seenOuter = msgsEl.querySelector(`.dm-bubble-outer[data-msg-id="${updatedId}"]`);
     if (!seenOuter) {
       const wrap = msgsEl.querySelector(`.dm-bubble-wrap[data-msg-id="${updatedId}"]`);
       if (wrap) seenOuter = wrap.closest('.dm-bubble-outer') || wrap.parentElement;
     }
 
-    const allSentOuters = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer')];
+    console.log(`[seen] applySeen id=${updatedId} container=${msgsEl.id} found=${!!seenOuter} sentOuters=${allSentOuters.length}`);
+    if (seenOuter) console.log(`[seen]   seenOuter classes=${seenOuter.parentElement?.className} parentGroup=${seenOuter.closest('.dm-msg-group')?.className}`);
 
     if (seenOuter) {
-      // Mark this bubble and every earlier sent bubble as seen.
-      // Walk backwards through sent outers; once we hit the matching one, mark it and everything before it.
+      // Walk sent outers backwards; mark from the matching one downward
       let marking = false;
       for (let i = allSentOuters.length - 1; i >= 0; i--) {
         if (allSentOuters[i] === seenOuter || allSentOuters[i].dataset.msgId === updatedId) marking = true;
         if (marking) allSentOuters[i].dataset.seen = 'true';
       }
-      // If seenOuter was found but isn't in allSentOuters (shouldn't happen, but safety net):
-      // mark all sent outers seen — updatedId being present at all means the other user read up to here.
       if (!marking) {
+        // seenOuter exists but wasn't in .sent — mark all sent as seen (safety net)
+        console.warn('[seen] seenOuter not in sent list, marking all sent seen');
         allSentOuters.forEach(o => { o.dataset.seen = 'true'; });
-        msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => {
-          o.dataset.seen = 'true';
-        });
+        msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => { o.dataset.seen = 'true'; });
       }
     } else {
-      // The specific bubble isn't in the DOM (pagination, older load).
-      // Only mark ALL as seen if the read-pointer ID appears to be newer than
-      // everything visible — determined by checking if no rendered sent bubble
-      // has an id > updatedId. Since IDs are UUIDs (time-ordered v7/v4) we
-      // compare lexicographically which works for ULIDs / UUIDv7.
-      const allSentOutersWithId = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer[data-msg-id]')];
-      const anyNewer = allSentOutersWithId.some(o => (o.dataset.msgId || '') > updatedId);
+      // Bubble not rendered — compare UUID lexicographically
+      const allSentWithId = [...msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer[data-msg-id]')];
+      const anyNewer = allSentWithId.some(o => (o.dataset.msgId || '') > updatedId);
+      console.log(`[seen] bubble not in DOM anyNewer=${anyNewer} sentWithId=${allSentWithId.length}`);
       if (!anyNewer) {
         allSentOuters.forEach(o => { o.dataset.seen = 'true'; });
-        msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => {
-          o.dataset.seen = 'true';
-        });
+        msgsEl.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer:not([data-msg-id])').forEach(o => { o.dataset.seen = 'true'; });
       }
     }
     fixSeenLabels(msgsEl);
@@ -6900,17 +6900,17 @@ function applySeen(updatedId, myUserId) {
 async function pollSeenStatus(myUserId) {
   if (!activeDmId) return;
   try {
-    // Fetch the read receipt: the other user's last_read_message_id for messages sent by me
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from('chat_reads')
       .select('last_read_message_id')
-      .eq('user_id', activeDmId)       // the OTHER user is the reader
-      .eq('other_user_id', myUserId)   // they read MY messages
+      .eq('user_id', activeDmId)
+      .eq('other_user_id', myUserId)
       .maybeSingle();
 
+    console.log(`[seen] poll user_id=${activeDmId} other_user_id=${myUserId} → data=`, data, 'error=', error);
     if (!data || !data.last_read_message_id) return;
     applySeen(data.last_read_message_id, myUserId);
-  } catch(e) {}
+  } catch(e) { console.error('[seen] poll error', e); }
 }
 
 // Called once when DM opens. Three complementary mechanisms:
@@ -7078,6 +7078,32 @@ async function markConversationSeen(senderId) {
     });
   } catch (e) {}
 }
+
+// ── DEBUG HELPER — call window.debugSeen() in the browser console ──
+window.debugSeen = async function() {
+  console.log('[seen:debug] activeDmId =', activeDmId);
+  console.log('[seen:debug] _seenMyUserId =', _seenMyUserId);
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  console.log('[seen:debug] current user =', user?.id);
+  if (user && activeDmId) {
+    const { data, error } = await supabaseClient
+      .from('chat_reads')
+      .select('*')
+      .or(`user_id.eq.${user.id},user_id.eq.${activeDmId}`);
+    console.log('[seen:debug] chat_reads rows =', data, 'error=', error);
+
+    // Check DOM state
+    for (const id of ['dmChatMessages', 'dmFsMessages']) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const sentOuters = el.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer');
+      const seenOuters = el.querySelectorAll('.dm-msg-group.sent .dm-bubble-outer[data-seen="true"]');
+      const seenRows = el.querySelectorAll('.dm-seen-row');
+      console.log(`[seen:debug] ${id}: sent=${sentOuters.length} seen=${seenOuters.length} seenRows=${seenRows.length}`);
+      sentOuters.forEach(o => console.log(`  bubble msgId=${o.dataset.msgId} seen=${o.dataset.seen}`));
+    }
+  }
+};
 
 async function openDM() {
   dmOpen = true;
@@ -8097,6 +8123,7 @@ function fixSeenLabels(container) {
     }
     if (lastSeenGroup) break;
   }
+  console.log(`[seen] fixSeenLabels container=${container.id} sentGroups=${sentGroups.length} lastSeenGroup=${!!lastSeenGroup}`);
   if (!lastSeenGroup) return;
 
   // Build the seen row
@@ -8121,28 +8148,24 @@ function fixSeenLabels(container) {
 
   // Insert after the last seen group (at the same level as dm-msg-group elements)
   lastSeenGroup.insertAdjacentElement('afterend', seenRow);
+  console.log('[seen] fixSeenLabels: inserted seen row after group', lastSeenGroup.dataset.groupTs);
 }
 
 // ── LOAD SEEN STATE FROM DB ──
-// Called after messages are rendered (initial load + load-more).
-// Queries chat_reads to find the other user's last_read_message_id, then
-// stamps data-seen="true" on every sent bubble up to that point and
-// re-runs fixSeenLabels — so the "Seen" label is always accurate on open.
 async function loadSeenFromDB(myUserId, otherUserId) {
   if (!myUserId || !otherUserId) return;
   try {
-    // The other user (otherUserId) is the reader; myUserId is the sender they read.
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from('chat_reads')
       .select('last_read_message_id')
-      .eq('user_id', otherUserId)      // the OTHER user did the reading
-      .eq('other_user_id', myUserId)   // they read MY messages
+      .eq('user_id', otherUserId)
+      .eq('other_user_id', myUserId)
       .maybeSingle();
 
+    console.log(`[seen] loadSeenFromDB my=${myUserId} other=${otherUserId} → data=`, data, 'error=', error);
     if (!data || !data.last_read_message_id) return;
-    // Re-use applySeen so both containers get updated consistently.
     applySeen(data.last_read_message_id, myUserId);
-  } catch(e) {}
+  } catch(e) { console.error('[seen] loadSeenFromDB error', e); }
 }
 
 // Returns true if the string contains only emoji characters (and whitespace)
