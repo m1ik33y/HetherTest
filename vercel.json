@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/js/:path*",
+      "destination": "/api/asset?file=:path*"
+    }
+  ]
+}
