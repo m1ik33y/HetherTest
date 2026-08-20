@@ -1,17 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/asset.js": {
-      "includeFiles": "_private/js/**"
-    }
-  },
   "routes": [
     {
-      "src": "^/js/(.*)$",
+      "src": "/js/(.*)",
       "dest": "/api/asset?file=$1"
     },
     {
-      "src": "^/(.*)$",
+      "src": "/(.*)",
       "continue": true
     }
   ]
