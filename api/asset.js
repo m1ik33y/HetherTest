@@ -15,18 +15,52 @@ export default function handler(req, res) {
     return res.status(404).send("Not found");
   }
 
-  // If someone opens the JS URL directly in the browser,
-  // return an empty HTML document.
-  if (req.headers["sec-fetch-dest"] === "document") {
+  const fetchDest = req.headers["sec-fetch-dest"] || "";
+  const fetchMode = req.headers["sec-fetch-mode"] || "";
+  const accept = req.headers["accept"] || "";
+
+  /*
+   * Direct browser navigation:
+   *   Sec-Fetch-Dest: document
+   *   Sec-Fetch-Mode: navigate
+   *   Accept: text/html,...
+   *
+   * Script loading:
+   *   Sec-Fetch-Dest: script
+   *   Sec-Fetch-Mode: no-cors
+   */
+  const isDocumentNavigation =
+    fetchDest === "document" ||
+    fetchMode === "navigate" ||
+    accept.includes("text/html");
+
+  if (isDocumentNavigation) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.status(200).send("");
+    res.setHeader("Cache-Control", "no-store");
+
+    return res.status(200).send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body></body>
+</html>
+`);
   }
 
-  // When loaded by <script src="...">, return the actual JS.
   const code = fs.readFileSync(filePath, "utf8");
 
-  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.setHeader(
+    "Content-Type",
+    "application/javascript; charset=utf-8"
+  );
+
+  res.setHeader(
+    "Cache-Control",
+    "public, max-age=31536000, immutable"
+  );
 
   return res.status(200).send(code);
 }
