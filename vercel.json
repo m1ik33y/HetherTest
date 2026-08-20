@@ -3,7 +3,11 @@
   "routes": [
     {
       "src": "^/js/(.*)$",
-      "dest": "/api/asset?file=$1"
+      "dest": "/api/asset?file=$1&type=js"
+    },
+    {
+      "src": "^/css/(.*)$",
+      "dest": "/api/asset?file=$1&type=css"
     },
     {
       "src": "^/(.*)$",
