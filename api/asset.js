@@ -9,58 +9,26 @@ export default function handler(req, res) {
   }
 
   const safeFile = path.basename(file);
-  const filePath = path.join(process.cwd(), "js", safeFile);
+  const filePath = path.join(process.cwd(), "_private", "js", safeFile);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).send("Not found");
   }
 
-  const fetchDest = req.headers["sec-fetch-dest"] || "";
-  const fetchMode = req.headers["sec-fetch-mode"] || "";
-  const accept = req.headers["accept"] || "";
+  const destination = req.headers["sec-fetch-dest"] || "";
+  const mode = req.headers["sec-fetch-mode"] || "";
 
-  /*
-   * Direct browser navigation:
-   *   Sec-Fetch-Dest: document
-   *   Sec-Fetch-Mode: navigate
-   *   Accept: text/html,...
-   *
-   * Script loading:
-   *   Sec-Fetch-Dest: script
-   *   Sec-Fetch-Mode: no-cors
-   */
-  const isDocumentNavigation =
-    fetchDest === "document" ||
-    fetchMode === "navigate" ||
-    accept.includes("text/html");
-
-  if (isDocumentNavigation) {
+  // Directly opened in the browser
+  if (destination === "document" || mode === "navigate") {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-store");
-
-    return res.status(200).send(`
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title></title>
-</head>
-<body></body>
-</html>
-`);
+    return res.status(200).send("<!doctype html><html><head></head><body></body></html>");
   }
 
+  // Loaded by <script src="...">
   const code = fs.readFileSync(filePath, "utf8");
 
-  res.setHeader(
-    "Content-Type",
-    "application/javascript; charset=utf-8"
-  );
-
-  res.setHeader(
-    "Cache-Control",
-    "public, max-age=31536000, immutable"
-  );
+  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 
   return res.status(200).send(code);
 }
